@@ -1,0 +1,33 @@
+description: 8-agents---change-param
+
+### env
+num_vehicles: 8
+
+
+### learn
+eval: false
+load_model: false
+
+
+### reward
+reward_collision: -20.0
+reward_timeout: -5.0
+reward_done: 10.0
+
+
+### train
+dim_other_obsv: 6
+dim_action: 3
+capacity: 10000  # replay buffer size
+batch_size: 64
+
+n_episode: 20000
+max_steps: 1000
+
+gamma: 0.99  # discount
+tau: 0.2  # for target network update
+
+#### epsilon-greedy
+epsilon_prob_start: 0.8
+epsilon_prob_end: 0.001
+decay_rate: 0.999

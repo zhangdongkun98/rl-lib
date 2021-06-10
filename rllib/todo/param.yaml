@@ -1,0 +1,44 @@
+description: lunar
+
+### env
+num_vehicles: 1
+
+
+### learn
+load_model: false
+
+
+### reward
+reward_collision: -100.0
+reward_timeout: -50.0
+reward_done: 100.0
+
+reward_collision: -10.0
+reward_timeout: -5.0
+reward_done: 10.0
+
+# reward_collision: -1.0
+# reward_timeout: -0.5
+# reward_done: 1.0
+
+
+
+dim_action: 4
+capacity: 100000  ## replay buffer size
+batch_size: 100
+
+##brand new
+dim_obsv: 8
+dim_state: 8
+
+n_episode: 200000
+max_steps: 1000
+eval_times: 100
+
+gamma: 0.99  # discount
+tau: 0.005  # for target network update
+
+#### epsilon-greedy
+epsilon_prob_start: 1.0
+epsilon_prob_end: 0.01
+decay_rate: 0.99999
