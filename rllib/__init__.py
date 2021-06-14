@@ -8,3 +8,4 @@ from . import utils
 '''methods'''
 
 from . import ppo
+from . import td3

@@ -1,6 +1,7 @@
 import carla_utils as cu
 
 import copy
+from typing import Union
 
 import torch
 import torch.nn as nn
@@ -14,7 +15,7 @@ class PPO(cu.rl_template.MethodSingleAgent):
     K_epochs = 4
     epsilon_clip = 0.2
     weight_value = 1.0
-    weight_entropy = 0.00
+    weight_entropy = 0.005
     # weight_entropy = 0.00
 
     lr = 0.002
@@ -25,13 +26,13 @@ class PPO(cu.rl_template.MethodSingleAgent):
     def __init__(self, config, writer):
         super(PPO, self).__init__(config, writer)
 
-        self.policy = config.net_ac(config, self.std_action).to(self.device)
+        self.policy: Union[ActorCriticDiscrete, ActorCriticContinuous] = config.net_ac(config, self.std_action).to(self.device)
         self.policy_old = copy.deepcopy(self.policy)
         self.models_to_save = [self.policy]
 
         self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=self.lr, betas=self.betas)
         
-        self.critic_loss = nn.MSELoss(reduction='none')
+        # self.critic_loss = nn.MSELoss(reduction='none')
         self.critic_loss = nn.MSELoss()
         self._replay_buffer = Memory()
 
@@ -64,18 +65,18 @@ class PPO(cu.rl_template.MethodSingleAgent):
 
             logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
 
-            ratios = torch.exp(logprobs - old_logprobs.detach())   ## maybe remove detach
+            ratios = torch.exp(logprobs - old_logprobs.detach())
             advantages = rewards - state_values.detach()
 
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1-self.epsilon_clip, 1+self.epsilon_clip) * advantages
 
             loss =  - torch.min(surr1, surr2) \
-                    + self.weight_value*self.critic_loss(state_values, rewards) \
-                    - self.weight_entropy*dist_entropy
-            
+                    - self.weight_entropy*dist_entropy \
+                    + self.weight_value*self.critic_loss(state_values, rewards)
 
-            import pdb; pdb.set_trace()
+
+            # import pdb; pdb.set_trace()
 
             loss = loss.mean()
 
@@ -106,7 +107,7 @@ class ActorCriticDiscrete(cu.rl_template.Model):
 
         self.actor = self.Actor(config)
         self.critic = self.Critic(config)
-        self.apply(init_weights)
+        # self.apply(init_weights)
 
 
     def forward(self):
@@ -116,13 +117,13 @@ class ActorCriticDiscrete(cu.rl_template.Model):
         action_probs = self.actor(state)
         dist = Categorical(action_probs)
         action = dist.sample()
-        return action.item(), dist.log_prob(action)
+        return action, dist.log_prob(action)
 
     def evaluate(self, state, action):
         action_probs = self.actor(state)
 
         dist = Categorical(action_probs)
-        action_logprobs = dist.log_prob(action).unsqueeze(1)
+        action_logprobs = dist.log_prob(action.squeeze()).unsqueeze(1)
         dist_entropy = dist.entropy().unsqueeze(1)
 
         state_value = self.critic(state)
@@ -135,7 +136,7 @@ class ActorCriticDiscrete(cu.rl_template.Model):
             self.fc = nn.Sequential(
                 nn.Linear(config.dim_state, 64), nn.Tanh(),
                 nn.Linear(64, 64), nn.Tanh(),
-                nn.Linear(64, config.dim_action), nn.Softmax(dim=-1),
+                nn.Linear(64, config.dim_action), nn.Softmax(dim=1),
             )
         
         def forward(self, state):
