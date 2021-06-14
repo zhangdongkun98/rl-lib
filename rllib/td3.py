@@ -1,6 +1,4 @@
 
-import carla_utils as cu
-
 import numpy as np
 import copy
 import random
@@ -11,10 +9,11 @@ from torch.optim import Adam
 torch.set_printoptions(precision=6, threshold=1000, edgeitems=None, linewidth=65536, profile=None, sci_mode=False)
 np.set_printoptions(precision=6, linewidth=65536, suppress=True)
 
-from .methods.tools import init_weights
+from .utils import init_weights, soft_update
+from .template import MethodSingleAgent, Model, ReplayBufferSingleAgent, Experience
 
 
-class TD3(cu.rl_template.MethodSingleAgent):
+class TD3(MethodSingleAgent):
     gamma = 0.99
     tau = 0.005
     buffer_size = 1000000
@@ -100,12 +99,12 @@ class TD3(cu.rl_template.MethodSingleAgent):
 
     def _update_model(self):
         # print('[update_policy] soft update')
-        cu.rl_template.soft_update(self.critic_target, self.critic, self.tau)
-        cu.rl_template.soft_update(self.actor_target, self.actor, self.tau)
+        soft_update(self.critic_target, self.critic, self.tau)
+        soft_update(self.actor_target, self.actor, self.tau)
 
 
 
-class ReplayBuffer(cu.rl_template.ReplayBufferSingleAgent):
+class ReplayBuffer(ReplayBufferSingleAgent):
     def _batch_stack(self, batch):
         state, action, next_state, reward, done = [], [], [], [], []
         for e in batch:
@@ -124,7 +123,7 @@ class ReplayBuffer(cu.rl_template.ReplayBufferSingleAgent):
         # print('\n\n\n\n\n-------------------------------------------TD3: ReplayBuffer')
         # print('-------------------------------------------TD3: ReplayBuffer')
 
-        experience = cu.rl_template.Experience(
+        experience = Experience(
             state=state,
             next_state=next_state,
             action=action, reward=reward, done=done).to(self.device)
@@ -134,7 +133,7 @@ class ReplayBuffer(cu.rl_template.ReplayBufferSingleAgent):
 
 
 
-class Actor(cu.rl_template.Model):
+class Actor(Model):
     def __init__(self, config):
         super(Actor, self).__init__(config, model_id=0)
 
@@ -149,7 +148,7 @@ class Actor(cu.rl_template.Model):
         return self.fc(state)
 
 
-class Critic(cu.rl_template.Model):
+class Critic(Model):
     def __init__(self, config):
         super(Critic, self).__init__(config, model_id=0)
 

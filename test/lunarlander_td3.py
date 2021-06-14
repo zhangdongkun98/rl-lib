@@ -52,7 +52,7 @@ def main():
 
             next_state, reward, done, _ = env.step(action.cpu().numpy().flatten())
 
-            experience = cu.rl_template.Experience(
+            experience = rllib.template.Experience(
                     state=torch.from_numpy(state).float().unsqueeze(0),
                     next_state=torch.from_numpy(next_state).float().unsqueeze(0),
                     action=action.cpu(), reward=reward, done=done)

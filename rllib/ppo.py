@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 from torch.distributions import Categorical, MultivariateNormal
 
-from .methods.tools import init_weights
+from .utils import init_weights
 
 
 class PPO(cu.rl_template.MethodSingleAgent):
