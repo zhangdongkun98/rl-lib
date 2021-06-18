@@ -1,13 +1,9 @@
 
-import numpy as np
 import copy
-import random
 
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-torch.set_printoptions(precision=6, threshold=1000, edgeitems=None, linewidth=65536, profile=None, sci_mode=False)
-np.set_printoptions(precision=6, linewidth=65536, suppress=True)
 
 from .utils import init_weights, soft_update
 from .template import MethodSingleAgent, Model, ReplayBufferSingleAgent, Experience
@@ -15,14 +11,19 @@ from .template import MethodSingleAgent, Model, ReplayBufferSingleAgent, Experie
 
 class TD3(MethodSingleAgent):
     gamma = 0.99
+    
+    lr_critic = 0.0003
+    lr_actor = 0.0003
+
     tau = 0.005
+
     buffer_size = 1000000
     batch_size = 256
-    policy_freq = 4
+    policy_freq = 2
 
     explore_noise = 0.1
-    policy_noise = 0.4
-    noise_clip = 0.6
+    policy_noise = 0.2
+    noise_clip = 0.5
 
     start_timesteps = 30000
 
@@ -35,8 +36,8 @@ class TD3(MethodSingleAgent):
         self.actor_target = copy.deepcopy(self.actor)
         self.models_to_save = [self.critic, self.actor]
 
-        self.critic_optimizer= Adam(self.critic.parameters(), lr=5e-4)
-        self.actor_optimizer = Adam(self.actor.parameters(), lr=1e-4)
+        self.critic_optimizer= Adam(self.critic.parameters(), lr=self.lr_critic)
+        self.actor_optimizer = Adam(self.actor.parameters(), lr=self.lr_actor)
         self.critic_loss = nn.MSELoss()
 
         self._replay_buffer = ReplayBuffer(self.buffer_size, self.batch_size, config.device)
@@ -81,7 +82,7 @@ class TD3(MethodSingleAgent):
             self.writer.add_scalar('loss/a_loss', actor_loss.detach().item(), self.step_update)
         self.writer.add_scalar('loss/c_loss', critic_loss.detach().item(), self.step_update)
         
-        if self.step_update % 200 == 0: self._save_model()
+        # if self.step_update % 200 == 0: self._save_model()
         return
 
     @torch.no_grad()
@@ -93,7 +94,6 @@ class TD3(MethodSingleAgent):
         else:
             noise = torch.normal(0, self.explore_noise, size=(1,self.dim_action)).to(self.device)
             action_normal = self.actor(state.to(self.device))
-            # action_normal = (torch.tensor(action_normal) + noise).clamp(-1,1)
             action_normal = (action_normal.clone().detach() + noise).clamp(-1,1)
         return action_normal
 
@@ -120,15 +120,10 @@ class ReplayBuffer(ReplayBufferSingleAgent):
         reward = torch.tensor(reward, dtype=torch.float32).unsqueeze(1)
         done = torch.tensor(done, dtype=torch.float32).unsqueeze(1)
 
-        # print('\n\n\n\n\n-------------------------------------------TD3: ReplayBuffer')
-        # print('-------------------------------------------TD3: ReplayBuffer')
-
         experience = Experience(
             state=state,
             next_state=next_state,
             action=action, reward=reward, done=done).to(self.device)
-
-        # import pdb; pdb.set_trace()
         return experience
 
 
@@ -138,9 +133,9 @@ class Actor(Model):
         super(Actor, self).__init__(config, model_id=0)
 
         self.fc = nn.Sequential(
-            nn.Linear(config.dim_state, 64), nn.Tanh(),
-            nn.Linear(64, 64), nn.Tanh(),
-            nn.Linear(64, config.dim_action), nn.Tanh(),
+            nn.Linear(config.dim_state, 256), nn.ReLU(),
+            nn.Linear(256, 256), nn.ReLU(),
+            nn.Linear(256, config.dim_action), nn.Tanh(),
         )
         self.apply(init_weights)
     
@@ -153,9 +148,9 @@ class Critic(Model):
         super(Critic, self).__init__(config, model_id=0)
 
         self.fc1 = nn.Sequential(
-            nn.Linear(config.dim_state+config.dim_action, 64), nn.Tanh(),
-            nn.Linear(64, 64), nn.Tanh(),
-            nn.Linear(64, 1),
+            nn.Linear(config.dim_state+config.dim_action, 256), nn.ReLU(),
+            nn.Linear(256, 256), nn.ReLU(),
+            nn.Linear(256, 1),
         )
         self.fc2 = copy.deepcopy(self.fc1)
         self.apply(init_weights)

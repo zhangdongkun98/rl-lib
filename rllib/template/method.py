@@ -26,7 +26,6 @@ class MethodSingleAgent(ABC):
 
     def update_policy(self):
         self.step_update += 1
-    @abstractmethod
     def select_action(self):
         self.step_select += 1
 

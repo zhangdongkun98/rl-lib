@@ -21,11 +21,12 @@ def main():
     
     config = cu.system.YamlConfig({}, 'None')
     args = generate_args()
-    config.update(args)  
+    config.update(args)
 
     env_name = "LunarLanderContinuous-v2"
     env = gym.make(env_name)
     env.seed(seed)
+    env.action_space.seed(seed)
     setattr(env, 'dim_state', env.observation_space.shape[0])
     setattr(env, 'dim_action', env.action_space.shape[0])
 
@@ -43,14 +44,17 @@ def main():
 
     #############################################
 
+    i_episode = 0
     for i_episode in range(1, max_episodes+1):
         running_reward = 0
         avg_length = 0
         state = env.reset()
-        for _ in range(max_timesteps):
+        # for _ in range(max_timesteps):
+        while True:
             action = td3.select_action( torch.from_numpy(state).unsqueeze(0).float() )
 
             next_state, reward, done, _ = env.step(action.cpu().numpy().flatten())
+
 
             experience = rllib.template.Experience(
                     state=torch.from_numpy(state).float().unsqueeze(0),
@@ -62,12 +66,15 @@ def main():
 
             state = next_state
 
+            td3.update_policy()
+
             running_reward += reward
             avg_length += 1
             if render: env.render()
             if done: break
         
-        td3.update_policy()
+        # for _ in range(i_episode):
+        #     td3.update_policy()
 
         # stop training if avg_reward > solved_reward
         if running_reward > solved_reward:
@@ -77,6 +84,10 @@ def main():
         print('Episode {} \t avg length: {} \t reward: {}'.format(i_episode, avg_length, running_reward))
         writer.add_scalar('index/reward', running_reward, i_episode)
         writer.add_scalar('index/avg_length', avg_length, i_episode)
+
+
+
+    
             
 if __name__ == '__main__':
     main()
