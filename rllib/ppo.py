@@ -216,7 +216,7 @@ class ActorCriticContinuous(Model):
             self.fc = nn.Sequential(
                 nn.Linear(config.dim_state, 256), nn.ReLU(),
                 nn.Linear(256, 256), nn.ReLU(),
-                nn.Linear(256, 1)
+                nn.Linear(256, 1),
             )
         
         def forward(self, state):

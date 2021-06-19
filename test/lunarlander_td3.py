@@ -33,8 +33,6 @@ def main():
     config.set('dim_state', env.dim_state)
     config.set('dim_action', env.dim_action)
     config.set('device', torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
-    config.set('net_actor', rllib.td3.Actor)
-    config.set('net_critic', rllib.td3.Critic)
 
     model_name = TD3.__name__ + '-' + env_name
     writer = cu.basic.create_dir(config, model_name)

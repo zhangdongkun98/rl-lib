@@ -30,8 +30,8 @@ class TD3(MethodSingleAgent):
     def __init__(self, config, writer):
         super(TD3, self).__init__(config, writer)
 
-        self.critic = config.net_critic(config).to(self.device)
-        self.actor = config.net_actor(config).to(self.device)
+        self.critic = config.get('net_critic', Critic)(config).to(self.device)
+        self.actor = config.get('net_actor', Actor)(config).to(self.device)
         self.critic_target = copy.deepcopy(self.critic)
         self.actor_target = copy.deepcopy(self.actor)
         self.models_to_save = [self.critic, self.actor]
@@ -40,7 +40,7 @@ class TD3(MethodSingleAgent):
         self.actor_optimizer = Adam(self.actor.parameters(), lr=self.lr_actor)
         self.critic_loss = nn.MSELoss()
 
-        self._replay_buffer = ReplayBuffer(self.buffer_size, self.batch_size, config.device)
+        self._replay_buffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, config.device)
 
 
     def update_policy(self):
@@ -85,6 +85,7 @@ class TD3(MethodSingleAgent):
         # if self.step_update % 200 == 0: self._save_model()
         return
 
+
     @torch.no_grad()
     def select_action(self, state):
         super().select_action()
@@ -92,9 +93,9 @@ class TD3(MethodSingleAgent):
         if self.step_select < self.start_timesteps:
             action_normal = torch.Tensor(1,self.dim_action).uniform_(-1,1)
         else:
-            noise = torch.normal(0, self.explore_noise, size=(1,self.dim_action)).to(self.device)
+            noise = torch.normal(0, self.explore_noise, size=(1,self.dim_action))
             action_normal = self.actor(state.to(self.device))
-            action_normal = (action_normal.clone().detach() + noise).clamp(-1,1)
+            action_normal = (action_normal.cpu() + noise).clamp(-1,1)
         return action_normal
 
     def _update_model(self):
