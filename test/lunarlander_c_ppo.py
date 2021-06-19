@@ -21,19 +21,19 @@ def main():
     args = generate_args()
     config.update(args)
 
-    env_name = "LunarLander-v2"
+    env_name = "LunarLanderContinuous-v2"
     env = gym.make(env_name)
     env.seed(seed)
     env.action_space.seed(seed)
     setattr(env, 'dim_state', env.observation_space.shape[0])
-    setattr(env, 'dim_action', 4)
+    setattr(env, 'dim_action', env.action_space.shape[0])
 
     from rllib.ppo import PPO
 
     config.set('dim_state', env.dim_state)
     config.set('dim_action', env.dim_action)
     config.set('device', torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
-    config.set('net_ac', rllib.ppo.ActorCriticDiscrete)
+    config.set('net_ac', rllib.ppo.ActorCriticContinuous)
 
     model_name = PPO.__name__ + '-' + env_name
     writer = cu.basic.create_dir(config, model_name)
@@ -48,7 +48,7 @@ def main():
         # while True:
         for i in range(300):
             action = method.select_action( torch.from_numpy(state).unsqueeze(0).float() )
-            next_state, reward, done, _ = env.step(action.item())
+            next_state, reward, done, _ = env.step(action.cpu().numpy().flatten())
 
             if i == 299:
                 done = True

@@ -15,9 +15,7 @@ def main():
 
     render = False
     solved_reward = 230         # stop training if avg_reward > solved_reward
-    max_episodes = 1000000        # max training episodes
-    max_timesteps = 300         # max timesteps in one episode
-    update_timestep = 2000      # update policy every n timesteps
+    max_episodes = 10000        # max training episodes
     
     config = cu.system.YamlConfig({}, 'None')
     args = generate_args()
@@ -40,54 +38,43 @@ def main():
 
     model_name = TD3.__name__ + '-' + env_name
     writer = cu.basic.create_dir(config, model_name)
-    td3 = TD3(config, writer)
+    method = TD3(config, writer)
 
     #############################################
 
-    i_episode = 0
-    for i_episode in range(1, max_episodes+1):
+    for i_episode in range(max_episodes):
         running_reward = 0
         avg_length = 0
         state = env.reset()
-        # for _ in range(max_timesteps):
         while True:
-            action = td3.select_action( torch.from_numpy(state).unsqueeze(0).float() )
-
+            action = method.select_action( torch.from_numpy(state).unsqueeze(0).float() )
             next_state, reward, done, _ = env.step(action.cpu().numpy().flatten())
-
 
             experience = rllib.template.Experience(
                     state=torch.from_numpy(state).float().unsqueeze(0),
                     next_state=torch.from_numpy(next_state).float().unsqueeze(0),
                     action=action.cpu(), reward=reward, done=done)
-            td3.store(experience)
-
-            # import pdb; pdb.set_trace()
+            method.store(experience)
 
             state = next_state
 
-            td3.update_policy()
+            method.update_policy()
 
             running_reward += reward
             avg_length += 1
             if render: env.render()
             if done: break
         
-        # for _ in range(i_episode):
-        #     td3.update_policy()
-
-        # stop training if avg_reward > solved_reward
+        ### stop training if avg_reward > solved_reward
         if running_reward > solved_reward:
             print("########## Solved! ##########")
             
-        # logging
+        ### logging
         print('Episode {} \t avg length: {} \t reward: {}'.format(i_episode, avg_length, running_reward))
         writer.add_scalar('index/reward', running_reward, i_episode)
         writer.add_scalar('index/avg_length', avg_length, i_episode)
 
 
-
-    
             
 if __name__ == '__main__':
     main()

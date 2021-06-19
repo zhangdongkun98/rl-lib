@@ -1,25 +1,27 @@
-import carla_utils as cu
 
 import copy
 from typing import Union
 
 import torch
 import torch.nn as nn
+from torch.optim import Adam
 from torch.distributions import Categorical, MultivariateNormal
 
 from .utils import init_weights
+from .template import MethodSingleAgent, Model, ReplayBufferSingleAgent, Experience
 
-
-class PPO(cu.rl_template.MethodSingleAgent):
-    gamma = 0.95
+class PPO(MethodSingleAgent):
+    gamma = 0.99
     K_epochs = 4
     epsilon_clip = 0.2
     weight_value = 1.0
-    weight_entropy = 0.005
+    weight_entropy = 0.01
     # weight_entropy = 0.00
 
     lr = 0.002
     betas = (0.9, 0.999)
+
+    buffer_size = 2000
 
     std_action = 0.5
 
@@ -30,7 +32,7 @@ class PPO(cu.rl_template.MethodSingleAgent):
         self.policy_old = copy.deepcopy(self.policy)
         self.models_to_save = [self.policy]
 
-        self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=self.lr, betas=self.betas)
+        self.optimizer = Adam(self.policy.parameters(), lr=self.lr, betas=self.betas)
         
         # self.critic_loss = nn.MSELoss(reduction='none')
         self.critic_loss = nn.MSELoss()
@@ -38,7 +40,7 @@ class PPO(cu.rl_template.MethodSingleAgent):
 
 
     def update_policy(self):
-        if len(self._replay_buffer) < 2000:
+        if len(self._replay_buffer) < self.buffer_size:
             return
         super().update_policy()
 
@@ -57,13 +59,16 @@ class PPO(cu.rl_template.MethodSingleAgent):
 
         old_states = torch.cat(self._replay_buffer.states).detach().to(self.device)
         old_actions = torch.cat(self._replay_buffer.actions).detach().to(self.device)
-        old_logprobs = torch.stack(self._replay_buffer.logprobs).detach().to(self.device)
-        
+        old_logprobs = torch.cat(self._replay_buffer.logprobs).detach().to(self.device)
+
+        # import pdb; pdb.set_trace()
 
         for _ in range(self.K_epochs):
             self.step_train += 1
 
             logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
+
+            # import pdb; pdb.set_trace()
 
             ratios = torch.exp(logprobs - old_logprobs.detach())
             advantages = rewards - state_values.detach()
@@ -101,13 +106,13 @@ class PPO(cu.rl_template.MethodSingleAgent):
 
 
 
-class ActorCriticDiscrete(cu.rl_template.Model):
+class ActorCriticDiscrete(Model):
     def __init__(self, config, std_action):
         super(ActorCriticDiscrete, self).__init__(config, model_id=0)
 
         self.actor = self.Actor(config)
         self.critic = self.Critic(config)
-        # self.apply(init_weights)
+        self.apply(init_weights)
 
 
     def forward(self):
@@ -117,7 +122,7 @@ class ActorCriticDiscrete(cu.rl_template.Model):
         action_probs = self.actor(state)
         dist = Categorical(action_probs)
         action = dist.sample()
-        return action, dist.log_prob(action)
+        return action.unsqueeze(1), dist.log_prob(action).unsqueeze(1)
 
     def evaluate(self, state, action):
         action_probs = self.actor(state)
@@ -129,7 +134,7 @@ class ActorCriticDiscrete(cu.rl_template.Model):
         state_value = self.critic(state)
         return action_logprobs, state_value, dist_entropy
 
-    class Actor(cu.rl_template.Model):
+    class Actor(Model):
         def __init__(self, config):
             super().__init__(config, model_id=0)
 
@@ -142,14 +147,14 @@ class ActorCriticDiscrete(cu.rl_template.Model):
         def forward(self, state):
             return self.fc(state)
     
-    class Critic(cu.rl_template.Model):
+    class Critic(Model):
         def __init__(self, config):
             super().__init__(config, model_id=0)
 
             self.fc = nn.Sequential(
                 nn.Linear(config.dim_state, 64), nn.Tanh(),
                 nn.Linear(64, 64), nn.Tanh(),
-                nn.Linear(64, 1)
+                nn.Linear(64, 1),
             )
         
         def forward(self, state):
@@ -157,7 +162,7 @@ class ActorCriticDiscrete(cu.rl_template.Model):
 
 
 
-class ActorCriticContinuous(cu.rl_template.Model):
+class ActorCriticContinuous(Model):
     def __init__(self, config, std_action):
         super(ActorCriticContinuous, self).__init__(config, model_id=0)
 
@@ -176,7 +181,7 @@ class ActorCriticContinuous(cu.rl_template.Model):
         action_mean = self.actor(state)
         dist = MultivariateNormal(action_mean, self.cov)
         action = dist.sample()
-        return action, dist.log_prob(action)
+        return action, dist.log_prob(action).unsqueeze(1)
     
     def evaluate(self, state, action):
         action_mean = self.actor(state)
@@ -191,26 +196,27 @@ class ActorCriticContinuous(cu.rl_template.Model):
         return action_logprobs, state_value, dist_entropy
 
 
-    class Actor(cu.rl_template.Model):
+    class Actor(Model):
         def __init__(self, config):
             super().__init__(config, model_id=0)
 
             self.fc = nn.Sequential(
-                nn.Linear(config.dim_state, 64), nn.Tanh(),
-                nn.Linear(64, 64), nn.Tanh(),
-                nn.Linear(64, config.dim_action), nn.Tanh(),
+                nn.Linear(config.dim_state, 256), nn.ReLU(),
+                nn.Linear(256, 256), nn.ReLU(),
+                nn.Linear(256, config.dim_action), nn.Tanh(),
             )
         
         def forward(self, state):
             return self.fc(state)
-    class Critic(cu.rl_template.Model):
+    
+    class Critic(Model):
         def __init__(self, config):
             super().__init__(config, model_id=0)
 
             self.fc = nn.Sequential(
-                nn.Linear(config.dim_state, 64), nn.Tanh(),
-                nn.Linear(64, 64), nn.Tanh(),
-                nn.Linear(64, 1)
+                nn.Linear(config.dim_state, 256), nn.ReLU(),
+                nn.Linear(256, 256), nn.ReLU(),
+                nn.Linear(256, 1)
             )
         
         def forward(self, state):

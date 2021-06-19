@@ -16,10 +16,6 @@ class MethodSingleAgent(ABC):
 
         self.dim_state, self.dim_action = config.dim_state, config.dim_action
 
-        # self.batch_size = config.batch_size
-        # self.gamma = config.gamma
-        # self.tau = config.tau
-
         self.step_select = self.step_train = self.step_update = -1
 
         self.models_to_load, self.models_to_save = None, None
