@@ -25,6 +25,8 @@ class PPO(MethodSingleAgent):
 
     std_action = 0.5
 
+    save_model_interval = 20
+
     def __init__(self, config, writer):
         super(PPO, self).__init__(config, writer)
 
@@ -34,7 +36,6 @@ class PPO(MethodSingleAgent):
 
         self.optimizer = Adam(self.policy.parameters(), lr=self.lr, betas=self.betas)
         
-        # self.critic_loss = nn.MSELoss(reduction='none')
         self.critic_loss = nn.MSELoss()
         self._replay_buffer = Memory()
 
@@ -44,7 +45,7 @@ class PPO(MethodSingleAgent):
             return
         super().update_policy()
 
-        # Monte Carlo estimate of rewards:
+        ### Monte Carlo estimate of rewards:
         rewards = []
         discounted_reward = 0
         for reward, done in zip(reversed(self._replay_buffer.rewards), reversed(self._replay_buffer.dones)):
@@ -53,7 +54,7 @@ class PPO(MethodSingleAgent):
             discounted_reward = reward + (self.gamma * discounted_reward)
             rewards.insert(0, discounted_reward)
         
-        # Normalizing the rewards:
+        ### Normalizing the rewards:
         rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(1).to(self.device)
         rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
 
@@ -61,14 +62,10 @@ class PPO(MethodSingleAgent):
         old_actions = torch.cat(self._replay_buffer.actions).detach().to(self.device)
         old_logprobs = torch.cat(self._replay_buffer.logprobs).detach().to(self.device)
 
-        # import pdb; pdb.set_trace()
-
         for _ in range(self.K_epochs):
             self.step_train += 1
 
             logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
-
-            # import pdb; pdb.set_trace()
 
             ratios = torch.exp(logprobs - old_logprobs.detach())
             advantages = rewards - state_values.detach()
@@ -80,9 +77,6 @@ class PPO(MethodSingleAgent):
                     - self.weight_entropy*dist_entropy \
                     + self.weight_value*self.critic_loss(state_values, rewards)
 
-
-            # import pdb; pdb.set_trace()
-
             loss = loss.mean()
 
             self.optimizer.zero_grad()
@@ -91,13 +85,13 @@ class PPO(MethodSingleAgent):
 
             self.writer.add_scalar('loss/loss', loss.detach().item(), self.step_train)
         
-        if self.step_update % 20 == 0: self._save_model()
+        if self.step_update % self.save_model_interval == 0: self._save_model()
 
-        # Copy new weights into old policy:
+        ### Copy new weights into old policy:
         self.policy_old.load_state_dict(self.policy.state_dict())
         self._replay_buffer.clear_memory()
 
-    @torch.no_grad()   ## ! maybe important
+    @torch.no_grad()
     def select_action(self, state):
         super().select_action()
         action, log_prob = self.policy_old.act(state.to(self.device))

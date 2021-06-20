@@ -27,6 +27,8 @@ class TD3(MethodSingleAgent):
 
     start_timesteps = 30000
 
+    save_model_interval = 200
+
     def __init__(self, config, writer):
         super(TD3, self).__init__(config, writer)
 
@@ -82,7 +84,7 @@ class TD3(MethodSingleAgent):
             self.writer.add_scalar('loss/a_loss', actor_loss.detach().item(), self.step_update)
         self.writer.add_scalar('loss/c_loss', critic_loss.detach().item(), self.step_update)
         
-        # if self.step_update % 200 == 0: self._save_model()
+        if self.step_update % self.save_model_interval == 0: self._save_model()
         return
 
 
