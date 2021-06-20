@@ -2,12 +2,12 @@
 
 # LunarLanderContinuous-v2, TD3
 
-- 令人震惊的发现... 激活函数为relu，橙色曲线（网络宽度为256），蓝色曲线（网络宽度为64）：
+- 令人震惊的发现... 激活函数为relu，seed为1998，橙色曲线（网络宽度为256），蓝色曲线（网络宽度为64）：
 <p align="center"><img src="./images/2021-06-18-1.png" width="90%"><br></p>
 
 ---
 
-- 网络宽度为256，蓝色曲线（激活函数为relu），红色曲线（激活函数为tanh）：
+- 网络宽度为256，seed为1998，蓝色曲线（激活函数为relu），红色曲线（激活函数为tanh）：
 <p align="center"><img src="./images/2021-06-18-2.png" width="90%"><br></p>
 
 ```python
@@ -46,6 +46,11 @@ class Critic(Model):
         x = torch.cat([state, action], 1)
         return self.fc1(x)
 ```
+
+
+- 网络宽度为256，seed为1998，激活函数为relu，橙色曲线（DDPG），蓝色曲线（TD3）：
+<p align="center"><img src="./images/2021-06-20-1.png" width="90%"><br></p>
+
 
 ---
 

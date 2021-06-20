@@ -1,4 +1,5 @@
 
+
 import copy
 
 import torch
@@ -9,7 +10,7 @@ from .utils import init_weights, soft_update
 from .template import MethodSingleAgent, Model, ReplayBufferSingleAgent, Experience
 
 
-class TD3(MethodSingleAgent):
+class DDPG(MethodSingleAgent):
     gamma = 0.99
     
     lr_critic = 0.0003
@@ -28,7 +29,7 @@ class TD3(MethodSingleAgent):
     start_timesteps = 30000
 
     def __init__(self, config, writer):
-        super(TD3, self).__init__(config, writer)
+        super(DDPG, self).__init__(config, writer)
 
         self.critic = config.get('net_critic', Critic)(config).to(self.device)
         self.actor = config.get('net_actor', Actor)(config).to(self.device)
@@ -58,28 +59,23 @@ class TD3(MethodSingleAgent):
 
         '''critic'''
         with torch.no_grad():
-            noise = (torch.randn_like(action) * self.policy_noise).clamp(-self.noise_clip, self.noise_clip)
-            next_action = (self.actor_target(next_state) + noise).clamp(-1,1)
-
-            target_q1, target_q2 = self.critic_target(next_state, next_action)
-            target_q = torch.min(target_q1, target_q2)
+            target_q = self.critic_target(next_state, self.actor_target(next_state))
             target_q = reward + self.gamma * (1-done) * target_q
 
-        current_q1, current_q2 = self.critic(state, action)
-        critic_loss = self.critic_loss(current_q1, target_q) + self.critic_loss(current_q2, target_q)
+        current_q = self.critic(state, action)
+        critic_loss = self.critic_loss(current_q, target_q)
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
 
         '''actor'''
-        if self.step_update % self.policy_freq == 0:
-            actor_loss = -self.critic.q1(state, self.actor(state)).mean()
-            self.actor_optimizer.zero_grad()
-            actor_loss.backward()
-            self.actor_optimizer.step()
-            self._update_model()
+        actor_loss = -self.critic(state, self.actor(state)).mean()
+        self.actor_optimizer.zero_grad()
+        actor_loss.backward()
+        self.actor_optimizer.step()
+        self._update_model()
 
-            self.writer.add_scalar('loss/a_loss', actor_loss.detach().item(), self.step_update)
+        self.writer.add_scalar('loss/a_loss', actor_loss.detach().item(), self.step_update)
         self.writer.add_scalar('loss/c_loss', critic_loss.detach().item(), self.step_update)
         
         # if self.step_update % 200 == 0: self._save_model()
@@ -148,19 +144,16 @@ class Critic(Model):
     def __init__(self, config):
         super(Critic, self).__init__(config, model_id=0)
 
-        self.fc1 = nn.Sequential(
+        self.fc = nn.Sequential(
             nn.Linear(config.dim_state+config.dim_action, 256), nn.ReLU(),
             nn.Linear(256, 256), nn.ReLU(),
             nn.Linear(256, 1),
         )
-        self.fc2 = copy.deepcopy(self.fc1)
         self.apply(init_weights)
 
     def forward(self, state, action):
         x = torch.cat([state, action], 1)
-        return self.fc1(x), self.fc2(x)
+        return self.fc(x)
     
-    def q1(self, state, action):
-        x = torch.cat([state, action], 1)
-        return self.fc1(x)
+
 

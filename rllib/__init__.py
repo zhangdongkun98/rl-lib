@@ -10,4 +10,6 @@ from . import template
 '''methods'''
 
 from . import ppo
+
 from . import td3
+from . import ddpg
