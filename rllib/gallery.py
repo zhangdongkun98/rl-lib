@@ -1,4 +1,4 @@
-import carla_utils as cu
+import rllib
 
 import gym
 import torch
@@ -6,7 +6,7 @@ import torch.nn as nn
 
 
 
-def init_ppo(config: cu.system.YamlConfig, seed):
+def init_ppo(config: rllib.basic.YamlConfig, seed):
     env_name = "LunarLander-v2"
     env = gym.make(env_name)
     env.seed(seed)
@@ -23,7 +23,7 @@ def init_ppo(config: cu.system.YamlConfig, seed):
     config.set('net_ac', rllib.ppo.ActorCriticDiscrete)
 
     model_name = PPO.__name__ + '-' + env_name
-    writer = cu.basic.create_dir(config, model_name)
+    writer = rllib.basic.create_dir(config, model_name)
     method = PPO(config, writer)
 
     return writer, env, method

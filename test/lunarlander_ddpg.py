@@ -1,4 +1,3 @@
-import carla_utils as cu
 import rllib
 
 import gym
@@ -17,7 +16,7 @@ def main():
     solved_reward = 230         # stop training if avg_reward > solved_reward
     max_episodes = 10000        # max training episodes
     
-    config = cu.system.YamlConfig({}, 'None')
+    config = rllib.basic.YamlConfig({}, 'None')
     args = generate_args()
     config.update(args)
 

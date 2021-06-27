@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 
 import torch
 
-from carla_utils.system import YamlConfig
-from carla_utils.basic import Writer
+from ..basic import YamlConfig
+from ..basic import Writer
 
 
 class MethodSingleAgent(ABC):

@@ -93,12 +93,12 @@ class TD3(MethodSingleAgent):
         super().select_action()
 
         if self.step_select < self.start_timesteps:
-            action_normal = torch.Tensor(1,self.dim_action).uniform_(-1,1)
+            action = torch.Tensor(1,self.dim_action).uniform_(-1,1)
         else:
             noise = torch.normal(0, self.explore_noise, size=(1,self.dim_action))
-            action_normal = self.actor(state.to(self.device))
-            action_normal = (action_normal.cpu() + noise).clamp(-1,1)
-        return action_normal
+            action = self.actor(state.to(self.device))
+            action = (action.cpu() + noise).clamp(-1,1)
+        return action
 
     def _update_model(self):
         # print('[update_policy] soft update')
