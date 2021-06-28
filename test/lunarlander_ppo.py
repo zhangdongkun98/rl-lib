@@ -8,7 +8,7 @@ from rllib.args import generate_args
 
 def main():
     seed = 1998
-    rllib.utils.setup_seed(seed)
+    rllib.basic.setup_seed(seed)
 
     ############## Hyperparameters ##############
 

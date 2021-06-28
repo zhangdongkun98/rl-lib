@@ -8,7 +8,7 @@ from rllib.args import generate_args
 
 def main():
     seed = 1998
-    rllib.utils.setup_seed(seed)
+    rllib.basic.setup_seed(seed)
 
     ############## Hyperparameters ##############
 
@@ -34,7 +34,7 @@ def main():
     config.set('device', torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
 
     model_name = Method.__name__ + '-' + env_name
-    writer = cu.basic.create_dir(config, model_name)
+    writer = rllib.basic.create_dir(config, model_name)
     method = Method(config, writer)
 
     #############################################

@@ -7,7 +7,7 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.distributions import Categorical, MultivariateNormal
 
-from .utils import init_weights
+from .utils import init_weights, hard_update
 from .template import MethodSingleAgent, Model, ReplayBufferSingleAgent, Experience
 
 class PPO(MethodSingleAgent):
@@ -16,7 +16,6 @@ class PPO(MethodSingleAgent):
     epsilon_clip = 0.2
     weight_value = 1.0
     weight_entropy = 0.01
-    # weight_entropy = 0.00
 
     lr = 0.002
     betas = (0.9, 0.999)
@@ -88,7 +87,7 @@ class PPO(MethodSingleAgent):
         if self.step_update % self.save_model_interval == 0: self._save_model()
 
         ### Copy new weights into old policy:
-        self.policy_old.load_state_dict(self.policy.state_dict())
+        hard_update(self.policy_old, self.policy)
         self._replay_buffer.clear_memory()
 
     @torch.no_grad()
