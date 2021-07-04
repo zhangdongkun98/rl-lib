@@ -14,6 +14,10 @@ class Model(nn.Module):
         self.model_dir = config.model_dir
         self.model_num = int(config.model_num)
         self.device = config.device
+        self.dtype = torch.float32
+
+        self.dim_state = config.dim_state
+        self.dim_action = config.dim_action
 
     def load_model(self, model_id=None):
         models_name = '_'.join([self.method_name.upper(), self.__class__.__name__, '*.pth'])

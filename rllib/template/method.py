@@ -14,6 +14,8 @@ class MethodSingleAgent(ABC):
         self.path_pack = config.path_pack
         self.writer = writer
 
+        self.dtype = torch.float32
+
         self.dim_state, self.dim_action = config.dim_state, config.dim_action
 
         self.step_select = self.step_train = self.step_update = -1
