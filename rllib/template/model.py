@@ -7,7 +7,7 @@ import torch.nn as nn
 
 
 class Model(nn.Module):
-    def __init__(self, config, model_id):
+    def __init__(self, config, model_id=0):
         super(Model, self).__init__()
         self.model_id = model_id
         self.method_name = config.method
