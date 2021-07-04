@@ -42,7 +42,7 @@ class TD3(MethodSingleAgent):
         self.actor_optimizer = Adam(self.actor.parameters(), lr=self.lr_actor)
         self.critic_loss = nn.MSELoss()
 
-        self._replay_buffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, config.device)
+        self._replay_buffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, self.device)
 
 
     def update_policy(self):

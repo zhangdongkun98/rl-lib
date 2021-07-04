@@ -34,6 +34,21 @@ def pi2pi_tensor(theta):
     return torch.where(theta > np.pi, theta - TWO_PI, theta)
 
 
+def sincos2rad(sin, cos):
+    if isinstance(cos, np.ndarray) or isinstance(cos, float):
+        package = np
+    elif isinstance(cos, torch.Tensor):
+        package = torch
+    else: raise NotImplementedError
+    
+    theta = package.arctan(sin / cos)
+
+    w = package.sign(package.cos(theta) * cos) + package.sign(package.sin(theta) * sin) - 2
+    theta = pi2pi(theta - w * np.pi / 4)
+    return theta
+
+
+
 def np_dot(*args):
     res = args[0]
     for arg in args[1:]:
