@@ -21,7 +21,7 @@ def create_dir(config: YamlConfig, model_name):
                 config.eval: bool
     '''
     # dataset_name = model_name + '/' + config.method + '--' + str(int(time.time())) + '----' + str(config.description)
-    dataset_name = model_name + '/' + str(int(time.time())) + '----' + str(config.description)
+    dataset_name = model_name + '/' + time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime(time.time())) + '----' + str(config.description)
     print('create dir: ', dataset_name)
     log_path = join('results', dataset_name, 'log')
     save_model_path = join('results', dataset_name, 'saved_models')
