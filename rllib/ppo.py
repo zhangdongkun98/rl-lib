@@ -15,21 +15,19 @@ class PPO(MethodSingleAgent):
     K_epochs = 4
     epsilon_clip = 0.2
     weight_value = 1.0
-    weight_entropy = 0.01
+    weight_entropy = 0.001
 
     lr = 0.002
     betas = (0.9, 0.999)
 
     buffer_size = 2000
 
-    std_action = 0.5
-
     save_model_interval = 20
 
     def __init__(self, config, writer):
         super(PPO, self).__init__(config, writer)
 
-        self.policy: Union[ActorCriticDiscrete, ActorCriticContinuous] = config.net_ac(config, self.std_action).to(self.device)
+        self.policy: Union[ActorCriticDiscrete, ActorCriticContinuous] = config.net_ac(config).to(self.device)
         self.policy_old = copy.deepcopy(self.policy)
         self.models_to_save = [self.policy]
 
@@ -93,14 +91,14 @@ class PPO(MethodSingleAgent):
     @torch.no_grad()
     def select_action(self, state):
         super().select_action()
-        action, log_prob = self.policy_old.act(state.to(self.device))
-        self._replay_buffer.logprobs.append(log_prob)
+        action, logprob = self.policy_old(state.to(self.device))
+        self._replay_buffer.logprobs.append(logprob)
         return action
 
 
 
 class ActorCriticDiscrete(Model):
-    def __init__(self, config, std_action):
+    def __init__(self, config):
         super(ActorCriticDiscrete, self).__init__(config, model_id=0)
 
         self.actor = self.Actor(config)
@@ -108,10 +106,7 @@ class ActorCriticDiscrete(Model):
         self.apply(init_weights)
 
 
-    def forward(self):
-        raise NotImplementedError
-
-    def act(self, state):
+    def forward(self, state):
         action_probs = self.actor(state)
         dist = Categorical(action_probs)
         action = dist.sample()
@@ -154,53 +149,47 @@ class ActorCriticDiscrete(Model):
             return self.fc(state)
 
 
-
 class ActorCriticContinuous(Model):
-    def __init__(self, config, std_action):
+    def __init__(self, config):
         super(ActorCriticContinuous, self).__init__(config, model_id=0)
 
         self.actor = self.Actor(config)
         self.critic = self.Critic(config)
         self.apply(init_weights)
+        
+    def forward(self, state):
+        action_mean, action_logstd = self.actor(state)
 
-        self.var = torch.full((config.dim_action,), std_action**2).to(self.device)
-        self.cov = torch.diag(self.var)
-        
-        
-    def forward(self):
-        raise NotImplementedError
-        
-    def act(self, state):
-        action_mean = self.actor(state)
-        dist = MultivariateNormal(action_mean, self.cov)
+        cov = torch.diag_embed( torch.exp(action_logstd) )
+        dist = MultivariateNormal(action_mean, cov)
         action = dist.sample()
         return action, dist.log_prob(action).unsqueeze(1)
     
     def evaluate(self, state, action):
-        action_mean = self.actor(state)
-        var = self.var.expand_as(action_mean)
-        cov = torch.diag_embed(var).to(self.device)
-        
-        dist = MultivariateNormal(action_mean, cov)
-        action_logprobs = dist.log_prob(action).unsqueeze(1)
-        dist_entropy = dist.entropy().unsqueeze(1)
+        action_mean, action_logstd = self.actor(state)
 
-        state_value = self.critic(state)
-        return action_logprobs, state_value, dist_entropy
+        cov = torch.diag_embed( torch.exp(action_logstd) )
+        dist = MultivariateNormal(action_mean, cov)
+        logprob = dist.log_prob(action).unsqueeze(1)
+        entropy = dist.entropy().unsqueeze(1)
+
+        value = self.critic(state)
+        return logprob, value, entropy
 
 
     class Actor(Model):
         def __init__(self, config):
             super().__init__(config, model_id=0)
 
-            self.fc = nn.Sequential(
+            self.mean = nn.Sequential(
                 nn.Linear(config.dim_state, 256), nn.ReLU(),
                 nn.Linear(256, 256), nn.ReLU(),
                 nn.Linear(256, config.dim_action), nn.Tanh(),
             )
+            self.std = copy.deepcopy(self.mean)
         
         def forward(self, state):
-            return self.fc(state)
+            return self.mean(state), self.std(state)
     
     class Critic(Model):
         def __init__(self, config):
