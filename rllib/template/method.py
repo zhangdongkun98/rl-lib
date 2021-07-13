@@ -36,5 +36,5 @@ class MethodSingleAgent(ABC):
         return
 
     def store(self, experience):
-        self._replay_buffer.push(experience)
+        self._memory.push(experience)
 

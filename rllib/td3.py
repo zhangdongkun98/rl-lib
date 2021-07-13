@@ -5,8 +5,9 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 
+from .buffer import ReplayBufferOffPolicy as ReplayBuffer
 from .utils import init_weights, soft_update
-from .template import MethodSingleAgent, Model, ReplayBufferSingleAgent, Experience
+from .template import MethodSingleAgent, Model
 
 
 class TD3(MethodSingleAgent):
@@ -42,16 +43,16 @@ class TD3(MethodSingleAgent):
         self.actor_optimizer = Adam(self.actor.parameters(), lr=self.lr_actor)
         self.critic_loss = nn.MSELoss()
 
-        self._replay_buffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, self.device)
+        self._memory: ReplayBuffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, self.device)
 
 
     def update_policy(self):
-        if len(self._replay_buffer) < self.start_timesteps:
+        if len(self._memory) < self.start_timesteps:
             return
         super().update_policy()
 
         '''load data batch'''
-        experience = self._replay_buffer.sample()
+        experience = self._memory.sample()
         state = experience.state
         action = experience.action
         next_state = experience.next_state
@@ -104,30 +105,6 @@ class TD3(MethodSingleAgent):
         # print('[update_policy] soft update')
         soft_update(self.critic_target, self.critic, self.tau)
         soft_update(self.actor_target, self.actor, self.tau)
-
-
-
-class ReplayBuffer(ReplayBufferSingleAgent):
-    def _batch_stack(self, batch):
-        state, action, next_state, reward, done = [], [], [], [], []
-        for e in batch:
-            state.append(e.state)
-            action.append(e.action)
-            next_state.append(e.next_state)
-            reward.append(e.reward)
-            done.append(e.done)
-
-        state = torch.cat(state, dim=0)
-        action = torch.cat(action, dim=0)
-        next_state = torch.cat(next_state, dim=0)
-        reward = torch.tensor(reward, dtype=torch.float32).unsqueeze(1)
-        done = torch.tensor(done, dtype=torch.float32).unsqueeze(1)
-
-        experience = Experience(
-            state=state,
-            next_state=next_state,
-            action=action, reward=reward, done=done).to(self.device)
-        return experience
 
 
 

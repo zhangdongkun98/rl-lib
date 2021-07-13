@@ -7,8 +7,9 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.distributions import Categorical, MultivariateNormal
 
+from .buffer import RolloutBuffer
 from .utils import init_weights, hard_update
-from .template import MethodSingleAgent, Model, ReplayBufferSingleAgent, Experience
+from .template import MethodSingleAgent, Model
 
 class PPO(MethodSingleAgent):
     gamma = 0.99
@@ -21,6 +22,7 @@ class PPO(MethodSingleAgent):
     betas = (0.9, 0.999)
 
     buffer_size = 2000
+    batch_size = 0
 
     save_model_interval = 20
 
@@ -34,30 +36,35 @@ class PPO(MethodSingleAgent):
         self.optimizer = Adam(self.policy.parameters(), lr=self.lr, betas=self.betas)
         
         self.critic_loss = nn.MSELoss()
-        self._replay_buffer = Memory()
+        self._memory: RolloutBuffer = config.get('buffer', RolloutBuffer)(self.device, self.batch_size)
 
 
     def update_policy(self):
-        if len(self._replay_buffer) < self.buffer_size:
+        if len(self._memory) < self.buffer_size:
             return
         super().update_policy()
 
-        ### Monte Carlo estimate of rewards:
-        rewards = []
-        discounted_reward = 0
-        for reward, done in zip(reversed(self._replay_buffer.rewards), reversed(self._replay_buffer.dones)):
-            if done:
-                discounted_reward = 0
-            discounted_reward = reward + (self.gamma * discounted_reward)
-            rewards.insert(0, discounted_reward)
-        
-        ### Normalizing the rewards:
-        rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(1).to(self.device)
+        experience = self._memory.sample(self.gamma)
+
+        old_states = experience.state
+        old_actions = experience.action
+        old_logprobs = experience.prob
+
+        rewards = experience.reward
         rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
 
-        old_states = torch.cat(self._replay_buffer.states).detach().to(self.device)
-        old_actions = torch.cat(self._replay_buffer.actions).detach().to(self.device)
-        old_logprobs = torch.cat(self._replay_buffer.logprobs).detach().to(self.device)
+        # discounted_reward = 0
+        # for reward, done in zip(reversed(self._memory.rewards), reversed(self._memory.dones)):
+        #     if done:
+        #         discounted_reward = 0
+        #     discounted_reward = reward + (self.gamma * discounted_reward)
+        #     rewards.insert(0, discounted_reward)
+        
+        # ### Normalizing the rewards:
+        # rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(1).to(self.device)
+        # rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
+
+
 
         for _ in range(self.K_epochs):
             self.step_train += 1
@@ -86,13 +93,13 @@ class PPO(MethodSingleAgent):
 
         ### Copy new weights into old policy:
         hard_update(self.policy_old, self.policy)
-        self._replay_buffer.clear_memory()
+        self._memory.clear()
 
     @torch.no_grad()
     def select_action(self, state):
         super().select_action()
         action, logprob = self.policy_old(state.to(self.device))
-        self._replay_buffer.logprobs.append(logprob)
+        self._memory.push_prob(logprob)
         return action
 
 
@@ -203,33 +210,4 @@ class ActorCriticContinuous(Model):
         
         def forward(self, state):
             return self.fc(state)
-
-
-
-class Memory(object):
-    def __init__(self):
-        self.actions = []
-        self.states = []
-        self.logprobs = []
-        self.rewards = []
-        self.dones = []
-    
-    def push(self, experience):
-        self.actions.append(experience.action)
-        self.states.append(experience.state)
-        self.rewards.append(experience.reward)
-        self.dones.append(experience.done)
-    
-    def clear_memory(self):
-        del self.actions[:]
-        del self.states[:]
-        del self.logprobs[:]
-        del self.rewards[:]
-        del self.dones[:]
-    
-    def __len__(self):
-        return len(self.actions)
-
-
-
 
