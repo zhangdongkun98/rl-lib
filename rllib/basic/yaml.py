@@ -1,4 +1,5 @@
 
+from typing import ValuesView
 import yaml
 from os.path import join
 
@@ -42,7 +43,8 @@ class YamlConfig(object):
     
     def set(self, key, value):
         if hasattr(self, key):
-            raise NotImplementedError('warning: cannot imagine why need this.')
+            print('[YamlConfig] warning: cannot imagine why need this: set {} to {}'.format(key, str(value)))
+            # raise NotImplementedError('warning: cannot imagine why need this.')
         setattr(self, key, value)
     
     

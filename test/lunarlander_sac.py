@@ -27,16 +27,15 @@ def main():
     setattr(env, 'dim_state', env.observation_space.shape[0])
     setattr(env, 'dim_action', env.action_space.shape[0])
 
-    from rllib.ppo import PPO
+    from rllib.sac import SAC as Method
 
     config.set('dim_state', env.dim_state)
     config.set('dim_action', env.dim_action)
     config.set('device', torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
-    config.set('net_ac', rllib.ppo.ActorCriticContinuous)
 
-    model_name = PPO.__name__ + '-' + env_name
+    model_name = Method.__name__ + '-' + env_name
     writer = rllib.basic.create_dir(config, model_name)
-    method = PPO(config, writer)
+    method = Method(config, writer)
 
     #############################################
 
@@ -45,26 +44,23 @@ def main():
         avg_length = 0
         state = env.reset()
         while True:
-        # for i in range(300):
             action = method.select_action( torch.from_numpy(state).unsqueeze(0).float() )
             next_state, reward, done, _ = env.step(action.cpu().numpy().flatten())
 
-            # if i == 299:
-            #     done = True
-
             experience = rllib.template.Experience(
                     state=torch.from_numpy(state).float().unsqueeze(0),
+                    next_state=torch.from_numpy(next_state).float().unsqueeze(0),
                     action=action.cpu(), reward=reward, done=done)
             method.store(experience)
 
             state = next_state
-            
+
+            method.update_policy()
+
             running_reward += reward
             avg_length += 1
             if render: env.render()
             if done: break
-        
-        method.update_policy()
         
         ### stop training if avg_reward > solved_reward
         if running_reward > solved_reward:
@@ -76,7 +72,7 @@ def main():
         writer.add_scalar('index/avg_length', avg_length, i_episode)
 
 
-
+            
 if __name__ == '__main__':
     main()
     

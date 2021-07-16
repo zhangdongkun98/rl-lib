@@ -7,9 +7,10 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.distributions import Categorical, MultivariateNormal
 
-from .buffer import RolloutBuffer
+from .buffer import RolloutBufferOnPolicy as RolloutBuffer
 from .utils import init_weights, hard_update
 from .template import MethodSingleAgent, Model
+
 
 class PPO(MethodSingleAgent):
     gamma = 0.99
@@ -53,19 +54,6 @@ class PPO(MethodSingleAgent):
         rewards = experience.reward
         rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
 
-        # discounted_reward = 0
-        # for reward, done in zip(reversed(self._memory.rewards), reversed(self._memory.dones)):
-        #     if done:
-        #         discounted_reward = 0
-        #     discounted_reward = reward + (self.gamma * discounted_reward)
-        #     rewards.insert(0, discounted_reward)
-        
-        # ### Normalizing the rewards:
-        # rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(1).to(self.device)
-        # rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
-
-
-
         for _ in range(self.K_epochs):
             self.step_train += 1
 
@@ -106,7 +94,7 @@ class PPO(MethodSingleAgent):
 
 class ActorCriticDiscrete(Model):
     def __init__(self, config):
-        super(ActorCriticDiscrete, self).__init__(config, model_id=0)
+        super().__init__(config, model_id=0)
 
         self.actor = self.Actor(config)
         self.critic = self.Critic(config)
@@ -158,7 +146,7 @@ class ActorCriticDiscrete(Model):
 
 class ActorCriticContinuous(Model):
     def __init__(self, config):
-        super(ActorCriticContinuous, self).__init__(config, model_id=0)
+        super().__init__(config, model_id=0)
 
         self.actor = self.Actor(config)
         self.critic = self.Critic(config)
@@ -185,6 +173,9 @@ class ActorCriticContinuous(Model):
 
 
     class Actor(Model):
+        logstd_min = -1
+        logstd_max = 1
+
         def __init__(self, config):
             super().__init__(config, model_id=0)
 
@@ -196,7 +187,10 @@ class ActorCriticContinuous(Model):
             self.std = copy.deepcopy(self.mean)
         
         def forward(self, state):
-            return self.mean(state), self.std(state)
+            mean = self.mean(state)
+            logstd = self.std(state)
+            logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
+            return mean, logstd *0.5
     
     class Critic(Model):
         def __init__(self, config):

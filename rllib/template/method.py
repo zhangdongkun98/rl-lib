@@ -9,7 +9,8 @@ from ..basic import Writer
 
 class MethodSingleAgent(ABC):
     def __init__(self, config: YamlConfig, writer: Writer):
-        self.method_name = config.method
+        config.set('method_name', self.__class__.__name__)
+
         self.device = config.device
         self.path_pack = config.path_pack
         self.writer = writer

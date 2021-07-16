@@ -4,7 +4,7 @@ def generate_args():
     argparser = argparse.ArgumentParser(description=__doc__)
 
     argparser.add_argument('-d', dest='description', default='Nothing', help='[Method] description.')
-    argparser.add_argument('-m', '--method', default='None', type=str, help='[Method] Method to use.')
+    # argparser.add_argument('-m', '--method', default='None', type=str, help='[Method] Method to use.')
     argparser.add_argument('--eval', action='store_true', help='[Method] Eval mode (default: False)')
 
     argparser.add_argument('--load-model', action='store_true', help='[Model] Load model (default: False)')

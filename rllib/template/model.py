@@ -10,7 +10,7 @@ class Model(nn.Module):
     def __init__(self, config, model_id=0):
         super(Model, self).__init__()
         self.model_id = model_id
-        self.method_name = config.method
+        self.method_name = config.method_name
         self.model_dir = config.model_dir
         self.model_num = int(config.model_num)
         self.device = config.device
