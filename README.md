@@ -12,6 +12,6 @@ pip install atari-py
 
 # reference
 
-https://github.com/sfujim/TD3
-https://github.com/haarnoja/sac
-https://github.com/pranz24/pytorch-soft-actor-critic
+- https://github.com/sfujim/TD3
+- https://github.com/haarnoja/sac
+- https://github.com/pranz24/pytorch-soft-actor-critic
