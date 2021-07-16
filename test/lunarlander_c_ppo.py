@@ -44,13 +44,13 @@ def main():
         running_reward = 0
         avg_length = 0
         state = env.reset()
-        while True:
-        # for i in range(300):
+        # while True:
+        for i in range(400):
             action = method.select_action( torch.from_numpy(state).unsqueeze(0).float() )
             next_state, reward, done, _ = env.step(action.cpu().numpy().flatten())
 
-            # if i == 299:
-            #     done = True
+            if i == 399:
+                done = True
 
             experience = rllib.template.Experience(
                     state=torch.from_numpy(state).float().unsqueeze(0),

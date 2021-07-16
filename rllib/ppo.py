@@ -14,7 +14,6 @@ from .template import MethodSingleAgent, Model
 
 class PPO(MethodSingleAgent):
     gamma = 0.99
-    K_epochs = 4
     epsilon_clip = 0.2
     weight_value = 1.0
     weight_entropy = 0.001
@@ -22,6 +21,7 @@ class PPO(MethodSingleAgent):
     lr = 0.002
     betas = (0.9, 0.999)
 
+    K_epochs = 4
     buffer_size = 2000
     batch_size = 0
 
