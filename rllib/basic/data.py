@@ -85,7 +85,7 @@ class Data(object):
     
     def to_tensor(self):
         '''
-            for torch.Tensor
+            for np.ndarray
         '''
 
         new_dict = dict()
@@ -98,3 +98,17 @@ class Data(object):
                 raise NotImplementedError
         return type(self)(**new_dict)
 
+
+    @property
+    def shape(self):
+        '''
+            for torch.Tensor and np.ndarray
+        '''
+
+        res = self.__class__.__name__ + '('
+        for (key, value) in self.__dict__.items():
+            if isinstance(value, torch.Tensor) or isinstance(value, np.ndarray) or isinstance(value, Data):
+                res += key + '=' + str(value.shape) + ', '
+            else:
+                raise NotImplementedError
+        return res[:-2] + ')'

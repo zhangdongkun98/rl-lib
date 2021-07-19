@@ -7,7 +7,7 @@ import torch
 from ..template import Experience
 
 
-class ReplayBuffer(ABC):
+class ReplayBuffer(object):
     def __init__(self, capacity, batch_size, device):
         self.capacity, self.size = capacity, 0
         self.batch_size, self.device = batch_size, device
