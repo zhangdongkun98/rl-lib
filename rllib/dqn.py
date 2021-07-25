@@ -41,10 +41,10 @@ class DQN(MethodSingleAgent):
         self._memory = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, config.device)
 
 
-    def update_policy(self):
+    def update_parameters(self):
         if len(self._memory) < self.start_timesteps:
             return
-        super().update_policy()
+        super().update_parameters()
 
         '''load data batch'''
         experience = self._memory.sample()
@@ -87,7 +87,7 @@ class DQN(MethodSingleAgent):
         return action
 
     def _update_model(self):
-        # print('[update_policy] soft update')
+        # print('[update_parameters] soft update')
         soft_update(self.policy_target, self.policy, self.tau)
 
 

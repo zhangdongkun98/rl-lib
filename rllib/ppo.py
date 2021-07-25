@@ -17,13 +17,17 @@ class PPO(MethodSingleAgent):
     epsilon_clip = 0.2
     weight_value = 1.0
     weight_entropy = 0.001
+    weight_entropy = 0.01
 
     lr = 0.002
+    lr = 0.0003
     betas = (0.9, 0.999)
 
     K_epochs = 4
+    K_epochs = 10
     buffer_size = 2000
     batch_size = 0
+    batch_size = 32
 
     save_model_interval = 20
 
@@ -40,22 +44,22 @@ class PPO(MethodSingleAgent):
         self._memory: RolloutBuffer = config.get('buffer', RolloutBuffer)(self.device, self.batch_size)
 
 
-    def update_policy(self):
+    def update_parameters(self):
         if len(self._memory) < self.buffer_size:
             return
-        super().update_policy()
-
-        experience = self._memory.sample(self.gamma)
-
-        old_states = experience.state
-        old_actions = experience.action
-        old_logprobs = experience.prob
-
-        rewards = experience.reward
-        rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
+        super().update_parameters()
 
         for _ in range(self.K_epochs):
             self.step_train += 1
+
+            experience = self._memory.sample(self.gamma)
+
+            old_states = experience.state
+            old_actions = experience.action
+            old_logprobs = experience.prob
+
+            rewards = experience.reward
+            rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
 
             logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
 
@@ -73,6 +77,7 @@ class PPO(MethodSingleAgent):
 
             self.optimizer.zero_grad()
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), 0.1)
             self.optimizer.step()
 
             self.writer.add_scalar('loss/loss', loss.detach().item(), self.step_train)

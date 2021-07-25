@@ -23,16 +23,16 @@ class MethodSingleAgent(ABC):
 
         self.models_to_load, self.models_to_save = None, None
 
-    def update_policy(self):
+    def update_parameters(self):
         self.step_update += 1
     def select_action(self):
         self.step_select += 1
 
     def _save_model(self):
-        # print("[update_policy] save model")
+        # print("[update_parameters] save model")
         [model.save_model(self.path_pack.save_model_path, self.step_update) for model in self.models_to_save]
     def _load_model(self):
-        print('[update_policy] load model')
+        print('[update_parameters] load model')
         [model.load_model() for model in self.models_to_load]
         return
 

@@ -64,7 +64,7 @@ def main():
             if render: env.render()
             if done: break
         
-        method.update_policy()
+        method.update_parameters()
         
         ### stop training if avg_reward > solved_reward
         if running_reward > solved_reward:

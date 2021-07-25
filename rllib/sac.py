@@ -48,10 +48,10 @@ class SAC(MethodSingleAgent):
         self._memory: ReplayBuffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, self.device)
 
 
-    def update_policy(self):
+    def update_parameters(self):
         if len(self._memory) < self.start_timesteps:
             return
-        super().update_policy()
+        super().update_parameters()
 
         '''load data batch'''
         experience = self._memory.sample()
@@ -110,7 +110,7 @@ class SAC(MethodSingleAgent):
 
 
     def _update_model(self):
-        # print('[update_policy] soft update')
+        # print('[update_parameters] soft update')
         soft_update(self.critic_target, self.critic, self.tau)
         # soft_update(self.actor_target, self.actor, self.tau)
 
