@@ -10,7 +10,15 @@ pip install atari-py
 ```
 
 
-# reference
+## others
+	- basic
+
+    - buffer
+    - template
+
+
+
+## reference
 
 - https://github.com/sfujim/TD3
 - https://github.com/haarnoja/sac

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 import torch
 
-from ..template import Experience
+from ..basic import Data as Experience
 
 
 class ReplayBuffer(object):
@@ -26,7 +26,7 @@ class ReplayBuffer(object):
     def __len__(self):
         return np.clip(self.size, 0, self.capacity)
 
-    def _full(self):
+    def full(self):
         return self.size >= self.capacity
 
     @abstractmethod

@@ -5,7 +5,7 @@ from typing import List
 
 import torch
 
-from ..template import Experience
+from ..basic import Data as Experience
 
 
 class RolloutBuffer(object):

@@ -1,11 +1,10 @@
 
-from abc import ABC, abstractmethod
+from abc import ABC, abstractproperty
 
 import torch
 
 from ..basic import YamlConfig
 from ..basic import Writer
-
 
 class MethodSingleAgent(ABC):
     def __init__(self, config: YamlConfig, writer: Writer):
@@ -16,12 +15,12 @@ class MethodSingleAgent(ABC):
         self.writer = writer
 
         self.dtype = torch.float32
-
         self.dim_state, self.dim_action = config.dim_state, config.dim_action
-
         self.step_select = self.step_train = self.step_update = -1
 
         self.models_to_load, self.models_to_save = None, None
+
+        self._memory = None
 
     def update_parameters(self):
         self.step_update += 1
