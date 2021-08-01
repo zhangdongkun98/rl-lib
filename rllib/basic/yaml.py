@@ -14,25 +14,25 @@ def parse_yaml_file_unsafe(file_path):
     data = None
     with open(file_path) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
-    config = YamlConfig(data, file_path)
+    config = YamlConfig(**data)
     # config.set_path(os.path.abspath(file_path))
     return config
 
 
 class YamlConfig(object):
-    def __init__(self, args_dict, file_path):
-        self._file_path = file_path
-        for key in args_dict:
-            if isinstance(args_dict[key], type(dict())):
-                setattr(self, key, YamlConfig(args_dict[key], file_path))
+    def __init__(self, **kwargs):
+        for key in kwargs:
+            if isinstance(kwargs[key], type(dict())):
+                setattr(self, key, YamlConfig(**kwargs[key]))
             else:
-                setattr(self, key, args_dict[key])
+                setattr(self, key, kwargs[key])
+        return
     
     def __getattribute__(self, name):
         try:
             return object.__getattribute__(self, name)
         except:
-            e = 'yaml file \'{}\' has not attribute \'{}\''.format(self._file_path, name)
+            e = 'yaml file has not attribute \'{}\''.format(name)
             raise AttributeError(e)
     
     def get(self, key, default):
@@ -82,7 +82,6 @@ class YamlConfig(object):
                 if isinstance(value, YamlConfig):
                     result[attribute] = value.to_dict()
                 else: result[attribute] = value
-        result['__file_path__'] = self._file_path
         return result
 
     def save(self, path):

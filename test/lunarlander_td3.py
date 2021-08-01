@@ -16,7 +16,7 @@ def main():
     solved_reward = 230         # stop training if avg_reward > solved_reward
     max_episodes = 100000000        # max training episodes
     
-    config = rllib.basic.YamlConfig({}, 'None')
+    config = rllib.basic.YamlConfig()
     args = generate_args()
     config.update(args)
 
