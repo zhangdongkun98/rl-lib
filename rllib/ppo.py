@@ -91,7 +91,7 @@ class PPO(MethodSingleAgent):
     @torch.no_grad()
     def select_action(self, state):
         super().select_action()
-        action, logprob = self.policy_old(state.to(self.device))
+        action, logprob, _ = self.policy_old(state.to(self.device))
         self._memory.push_prob(logprob)
         return action
 
@@ -110,7 +110,7 @@ class ActorCriticDiscrete(Model):
         action_probs = self.actor(state)
         dist = Categorical(action_probs)
         action = dist.sample()
-        return action.unsqueeze(1), dist.log_prob(action).unsqueeze(1)
+        return action.unsqueeze(1), dist.log_prob(action).unsqueeze(1), action_probs
 
     def evaluate(self, state, action):
         action_probs = self.actor(state)
@@ -163,7 +163,7 @@ class ActorCriticContinuous(Model):
         cov = torch.diag_embed( torch.exp(action_logstd) )
         dist = MultivariateNormal(action_mean, cov)
         action = dist.sample()
-        return action, dist.log_prob(action).unsqueeze(1)
+        return action, dist.log_prob(action).unsqueeze(1), action_mean
     
     def evaluate(self, state, action):
         action_mean, action_logstd = self.actor(state)

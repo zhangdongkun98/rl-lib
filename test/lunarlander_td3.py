@@ -14,7 +14,7 @@ def main():
 
     render = False
     solved_reward = 230         # stop training if avg_reward > solved_reward
-    max_episodes = 10000        # max training episodes
+    max_episodes = 100000000        # max training episodes
     
     config = rllib.basic.YamlConfig({}, 'None')
     args = generate_args()
@@ -27,15 +27,15 @@ def main():
     setattr(env, 'dim_state', env.observation_space.shape[0])
     setattr(env, 'dim_action', env.action_space.shape[0])
 
-    from rllib.td3 import TD3
+    from rllib.td3 import TD3 as Method
 
     config.set('dim_state', env.dim_state)
     config.set('dim_action', env.dim_action)
     config.set('device', torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
 
-    model_name = TD3.__name__ + '-' + env_name
+    model_name = Method.__name__ + '-' + env_name
     writer = rllib.basic.create_dir(config, model_name)
-    method = TD3(config, writer)
+    method = Method(config, writer)
 
     #############################################
 

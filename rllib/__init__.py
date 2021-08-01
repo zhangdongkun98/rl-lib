@@ -26,3 +26,6 @@ from . import dqn
 
 from . import sac
 
+
+
+from .evaluate import EvaluateSingleAgent

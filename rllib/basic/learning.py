@@ -12,7 +12,7 @@ from .yaml import YamlConfig
 
 PathPack = namedtuple('PathPack', ('log_path', 'save_model_path', 'output_path'))
 
-def create_dir(config: YamlConfig, model_name):
+def create_dir(config: YamlConfig, model_name, mode='train'):
     '''
         create dir and save config
         Args:
@@ -22,6 +22,8 @@ def create_dir(config: YamlConfig, model_name):
                 config.eval: bool
     '''
     dataset_name = model_name + '/' + time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime(time.time())) + '----' + str(config.description)
+    if mode == 'evaluate':
+        dataset_name += '-' + mode
     print('create dir: ', dataset_name)
     log_path = join('results', dataset_name, 'log')
     save_model_path = join('results', dataset_name, 'saved_models')
