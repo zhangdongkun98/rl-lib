@@ -56,26 +56,10 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
         super().select_action()
 
         state = state.to(self.device)
-        # action = self.actor(state)
-        # value = self.critic(state, action)
+        action = self.actor(state)
+        value = self.critic(state, action)
 
         # print('action: ', action.cpu(), 'value', value)
         # import pdb; pdb.set_trace()
-
-        action_small = torch.tensor([[-1.0]], device=self.device)
-        action_large = torch.tensor([[1.0]], device=self.device)
-
-        v1 = min(self.critic(state, action_small))
-        v2 = min(self.critic(state, action_large))
-        if v1 > v2:
-            action = action_small
-        else:
-            action = action_large
-        
-        print(v1, v2)
-        import time
-        time.sleep(0.2)
-
-        return action_large
 
         return action
