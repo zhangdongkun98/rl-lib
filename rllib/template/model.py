@@ -11,7 +11,7 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.model_id = model_id
         self.method_name = config.method_name
-        self.model_dir = os.path.expanduser(config.model_dir)
+        self.model_dir = config.model_dir
         self.model_num = int(config.model_num)
         self.device = config.device
         self.dtype = torch.float32
@@ -20,15 +20,16 @@ class Model(nn.Module):
         self.dim_action = config.dim_action
 
     def load_model(self, model_id=None):
+        model_dir = os.path.expanduser(self.model_dir)
         models_name = '_'.join([self.method_name.upper(), self.__class__.__name__, '*.pth'])
-        file_paths = glob.glob(join(self.model_dir, models_name))
+        file_paths = glob.glob(join(model_dir, models_name))
         file_names = [os.path.split(i)[-1] for i in file_paths]
         nums = [int(i.split('_')[-2]) for i in file_names]
         model_num = max(nums) if self.model_num == -1 else self.model_num
         assert model_num in nums
         if model_id == None: model_id = self.model_id
         model_name = '_'.join([self.method_name.upper(), self.__class__.__name__, str(model_id), str(model_num), '.pth'])
-        model_path = join(self.model_dir, model_name)
+        model_path = join(model_dir, model_name)
         print('[load_model] load model: ', model_path)
         self.load_state_dict(torch.load(model_path))
     def save_model(self, path, iter_num):
