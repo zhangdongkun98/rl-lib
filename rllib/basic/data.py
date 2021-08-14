@@ -15,10 +15,10 @@ class Data(object):
     
 
     def __str__(self):
-        res = self.__class__.__name__ + '('
+        res = ''
         for (key, value) in self.__dict__.items():
             res += key + '=' + str(value) + ', '
-        return res[:-2] + ')'
+        return self.__class__.__name__ + '({})'.format(res[:-2])
 
 
     def to_dict(self):
