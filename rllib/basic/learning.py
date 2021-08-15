@@ -35,8 +35,8 @@ def create_dir(config: YamlConfig, model_name, mode='train'):
     path_pack = PathPack(log_path, save_model_path, output_path)
     config.set('path_pack', path_pack)
 
-    with open(join('results', dataset_name, 'comments'), mode='w', encoding='utf-8') as _: pass
-    config.save(join('results', dataset_name))
+    # with open(join('results', dataset_name, 'comments'), mode='w', encoding='utf-8') as _: pass
+    # config.save(join('results', dataset_name))
     return writer
 
 
