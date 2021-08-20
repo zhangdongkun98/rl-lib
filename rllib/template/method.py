@@ -2,8 +2,10 @@
 from abc import ABC, abstractproperty
 
 import torch
+import os
 from os.path import join
 
+from ..basic import Data
 from ..basic import YamlConfig
 from ..basic import Writer
 
@@ -15,6 +17,7 @@ class MethodSingleAgent(ABC):
         self.path_pack = config.path_pack
         self.writer = writer
         self.output_dir = join(self.path_pack.output_path, 'method')
+        os.makedirs(self.output_dir)
 
         self.dtype = torch.float32
         self.dim_state, self.dim_action = config.dim_state, config.dim_action
@@ -40,3 +43,9 @@ class MethodSingleAgent(ABC):
     def store(self, experience):
         self._memory.push(experience)
 
+
+
+    def update_callback(self, local):
+        local.pop('self')
+        local.pop('__class__')
+        return Data(**local)

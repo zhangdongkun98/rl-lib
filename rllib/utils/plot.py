@@ -10,7 +10,7 @@ import glob
 def generate_args():
     import argparse
     argparser = argparse.ArgumentParser(description=__doc__)
-    argparser.add_argument('-f', '--file-dir', default='None', type=str, help='..')
+    argparser.add_argument('-f', '--file-dir', default='./', type=str, help='..')
 
     args = argparser.parse_args()
     return args

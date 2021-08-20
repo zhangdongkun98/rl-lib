@@ -1,5 +1,6 @@
 
 import copy
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -84,8 +85,11 @@ class TD3(MethodSingleAgent):
 
             self.writer.add_scalar('loss/a_loss', actor_loss.detach().item(), self.step_update)
         self.writer.add_scalar('loss/c_loss', critic_loss.detach().item(), self.step_update)
-        
-        if self.step_update % self.save_model_interval == 0: self._save_model()
+
+        if self.step_update % self.save_model_interval == 0:
+            self._save_model()
+
+        self.update_callback(locals())
         return
 
 

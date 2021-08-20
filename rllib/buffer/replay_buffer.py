@@ -12,6 +12,7 @@ class ReplayBuffer(object):
         self.capacity, self.size = capacity, 0
         self.batch_size, self.device = batch_size, device
         self._memory = np.empty(self.capacity, dtype=Experience)
+        self.num_visits = np.zeros(self.capacity, dtype=np.int64)
         
     def push(self, experience):
         self._memory[self.size % self.capacity] = experience
@@ -19,6 +20,10 @@ class ReplayBuffer(object):
 
     def sample(self):
         indices = np.random.randint(0, len(self), size=self.batch_size)
+
+        unique, counts = np.unique(indices, return_counts=True)
+        self.num_visits[unique] += counts
+
         batch = self._memory[indices]
         experiences: Experience = self._batch_stack(batch)
         return experiences.to(self.device)
