@@ -2,6 +2,7 @@
 from abc import ABC, abstractproperty
 
 import torch
+from os.path import join
 
 from ..basic import YamlConfig
 from ..basic import Writer
@@ -13,6 +14,7 @@ class MethodSingleAgent(ABC):
         self.device = config.device
         self.path_pack = config.path_pack
         self.writer = writer
+        self.output_dir = join(self.path_pack.output_path, 'method')
 
         self.dtype = torch.float32
         self.dim_state, self.dim_action = config.dim_state, config.dim_action
