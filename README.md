@@ -1,6 +1,6 @@
 # rl-lib
 
-Follow the structure of [openai-spinningup-key-papers](https://spinningup.openai.com/en/latest/spinningup/keypapers.html).
+Goal: follow the structure of [openai-spinningup-key-papers](https://spinningup.openai.com/en/latest/spinningup/keypapers.html).
 
 
 ```bash

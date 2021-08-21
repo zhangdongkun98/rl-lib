@@ -9,6 +9,8 @@ from .image import image_transforms, image_transforms_reverse
 from .learning import create_dir, Writer, PathPack
 from .data import Data
 
+from .system import set_trace
+
 from . import torch
 
 from .yaml import YamlConfig
