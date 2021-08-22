@@ -25,9 +25,10 @@ def create_dir(config: YamlConfig, model_name, mode='train'):
     if mode == 'evaluate':
         dataset_name += '-' + mode
     print('create dir: ', dataset_name)
-    log_path = join('results', dataset_name, 'log')
-    save_model_path = join('results', dataset_name, 'saved_models')
-    output_path = join('results', dataset_name, 'output')
+    work_path = os.getcwd()
+    log_path = join(work_path, 'results', dataset_name, 'log')
+    save_model_path = join(work_path, 'results', dataset_name, 'saved_models')
+    output_path = join(work_path, 'results', dataset_name, 'output')
     os.makedirs(save_model_path, exist_ok=True)
     os.makedirs(output_path, exist_ok=True)
 
