@@ -9,6 +9,7 @@ def set_trace(local):
     except KeyError:
         pass
     local = Data(**local)
+    locals().update(local.to_dict())
     import pdb
     import rlcompleter
     pdb.Pdb.complete = rlcompleter.Completer(locals()).complete
