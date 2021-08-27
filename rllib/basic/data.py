@@ -33,31 +33,10 @@ def attr(self, rllib_data_attr_name):
     return type(self)(**new_dict)
 
 
-'''
-import functools
-
-def automatic(func_names, attr_names):
-    def init(cls):
-        for func_name in func_names:
-            # def _func(self, func_name=func_name, *args, **kwargs):
-            #     return func(self, func_name, *args, **kwargs)
-            # _func = lambda self, *args, **kwargs: func(self, func_name, *args, **kwargs)
-            _func = functools.partial(func, rllib_data_func_name=func_name)
-            # setattr(cls, func_name, _func(func_name))
-            setattr(cls, func_name, _func)
-        for attr_name in attr_names:
-            _attr = property(lambda self: attr(self, attr_name))
-            setattr(cls, attr_name, _attr)
-        return cls
-    return init
-'''
-
-
-# @automatic(_func_names, _attr_names)
 class Data(object):
     _func_numpy = []
     _func_torch = ['squeeze', 'unsqueeze', 'to', 'numpy']
-    _func_names = [] + _func_numpy + _func_torch
+    _func_names = ['repeat'] + _func_numpy + _func_torch
 
     _attr_numpy = []
     _attr_torch = ['device']
