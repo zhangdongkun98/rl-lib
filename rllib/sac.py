@@ -30,7 +30,7 @@ class SAC(MethodSingleAgent):
     def __init__(self, config, writer):
         super(SAC, self).__init__(config, writer)
 
-        self.critic = config.get('net_critic', Critic)(config).to(self.device)
+        self.critic: Critic = config.get('net_critic', Critic)(config).to(self.device)
         self.actor: Actor = config.get('net_actor', Actor)(config).to(self.device)
         self.critic_target = copy.deepcopy(self.critic)
         self.models_to_save = [self.critic, self.actor]
@@ -94,7 +94,10 @@ class SAC(MethodSingleAgent):
         self.writer.add_scalar('loss/alpha', self.alpha.detach().item(), self.step_update)
 
         self._update_model()
-        if self.step_update % self.save_model_interval == 0: self._save_model()
+        if self.step_update % self.save_model_interval == 0:
+            self._save_model()
+        
+        self.update_callback(locals())
         return
 
 
@@ -106,13 +109,13 @@ class SAC(MethodSingleAgent):
             action = torch.Tensor(1,self.dim_action).uniform_(-1,1)
         else:
             _, _, action = self.actor.sample(state.to(self.device))
+            action = action.cpu()
         return action
 
 
     def _update_model(self):
         # print('[update_parameters] soft update')
         soft_update(self.critic_target, self.critic, self.tau)
-        # soft_update(self.actor_target, self.actor, self.tau)
 
 
 

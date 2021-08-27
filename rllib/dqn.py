@@ -79,7 +79,6 @@ class DQN(MethodSingleAgent):
         super().select_action()
 
         if random.random() < self.epsilon_prob:
-        # if False:
             action = torch.tensor(random.choice(range(self.dim_action))).reshape(1,-1)
         else:
             action_value = self.policy(state.to(self.device))
