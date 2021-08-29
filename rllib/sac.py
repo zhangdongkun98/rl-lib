@@ -108,7 +108,7 @@ class SAC(MethodSingleAgent):
         if self.step_select < self.start_timesteps:
             action = torch.Tensor(1,self.dim_action).uniform_(-1,1)
         else:
-            _, _, action = self.actor.sample(state.to(self.device))
+            action, _, _ = self.actor.sample(state.to(self.device))
             action = action.cpu()
         return action
 
