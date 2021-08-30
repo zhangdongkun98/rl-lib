@@ -1,5 +1,6 @@
 
 import copy
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -13,6 +14,10 @@ from .template import MethodSingleAgent, Model
 
 class SAC(MethodSingleAgent):
     gamma = 0.99
+
+    reward_scale = 1.0
+    target_entropy = None
+    alpha_init = 1.0
 
     lr_critic = 0.0003
     lr_actor = 0.0003
@@ -40,9 +45,10 @@ class SAC(MethodSingleAgent):
         self.critic_loss = nn.MSELoss()
 
         ### automatic entropy tuning
-        self.alpha = 0.2
-        self.target_entropy = -torch.prod(torch.Tensor(self.dim_action).to(self.device)).item()
-        self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
+        if self.target_entropy == None:
+            self.target_entropy = -np.prod((self.dim_action,)).item()
+        self.log_alpha = torch.full((), np.log(self.alpha_init), requires_grad=True, dtype=self.dtype, device=self.device)
+        self.alpha = self.log_alpha.exp().detach()
         self.alpha_optimizer = Adam([self.log_alpha], lr=self.lr_tune)
 
         self._memory: ReplayBuffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, self.device)
@@ -58,7 +64,7 @@ class SAC(MethodSingleAgent):
         state = experience.state
         action = experience.action
         next_state = experience.next_state
-        reward = experience.reward
+        reward = experience.reward *self.reward_scale
         done = experience.done
 
         '''critic'''
@@ -83,11 +89,12 @@ class SAC(MethodSingleAgent):
         self.actor_optimizer.step()
 
         '''automatic entropy tuning'''
-        alpha_loss = -(self.log_alpha * (logprob + self.target_entropy).detach()).mean()
+        alpha_loss = self.log_alpha * (-logprob.mean() - self.target_entropy).detach()
         self.alpha_optimizer.zero_grad()
         alpha_loss.backward()
         self.alpha_optimizer.step()
-        self.alpha = self.log_alpha.exp()
+
+        self.alpha = self.log_alpha.exp().detach()
 
         self.writer.add_scalar('loss/c_loss', critic_loss.detach().item(), self.step_update)
         self.writer.add_scalar('loss/a_loss', actor_loss.detach().item(), self.step_update)
@@ -147,6 +154,15 @@ class Actor(Model):
         cov = torch.diag_embed( torch.exp(logstd) )
         dist = MultivariateNormal(mean, cov)
         u = dist.rsample()
+
+
+        if mean.shape[0] == 1:
+            print('    policy entropy: ', dist.entropy().detach().cpu())
+            print('    policy mean:    ', mean.detach().cpu())
+            print('    policy std:     ', torch.exp(logstd).detach().cpu())
+            print()
+
+
 
         ### Enforcing Action Bound
         action = torch.tanh(u)

@@ -7,32 +7,37 @@ from rllib.args import generate_args
 
 
 def main():
-    seed = 1998
-    rllib.basic.setup_seed(seed)
-
-    ############## Hyperparameters ##############
-
-    render = False
-    solved_reward = 230         # stop training if avg_reward > solved_reward
-    max_episodes = 10000        # max training episodes
-    
     config = rllib.basic.YamlConfig()
     args = generate_args()
     config.update(args)
 
+    ### common param
+    seed = config.seed
+    rllib.basic.setup_seed(config.seed)
+    config.set('device', torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
+
+    ### env param
     env_name = "LunarLanderContinuous-v2"
+    render = False
+    solved_reward = 230
+    max_episodes = 10000
+
     env = gym.make(env_name)
     env.seed(seed)
     env.action_space.seed(seed)
-    setattr(env, 'dim_state', env.observation_space.shape[0])
-    setattr(env, 'dim_action', env.action_space.shape[0])
+    config.set('dim_state', env.observation_space.shape[0])
+    config.set('dim_action', env.action_space.shape[0])
 
-    from rllib.sac import SAC as Method
-
-    config.set('dim_state', env.dim_state)
-    config.set('dim_action', env.dim_action)
-    config.set('device', torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
-
+    ### method param
+    method_name = config.method.upper()
+    if method_name == 'SAC':
+        from rllib.sac import SAC as Method
+    elif method_name == 'DDPG':
+        from rllib.ddpg import DDPG as Method
+    elif method_name == 'TD3':
+        from rllib.td3 import TD3 as Method
+    else:
+        raise NotImplementedError('Not support this method.')
     model_name = Method.__name__ + '-' + env_name
     writer = rllib.basic.create_dir(config, model_name)
     method = Method(config, writer)
@@ -62,7 +67,7 @@ def main():
             if render: env.render()
             if done: break
         
-        ### stop training if avg_reward > solved_reward
+        ### indicate the task is solved
         if running_reward > solved_reward:
             print("########## Solved! ##########")
             
