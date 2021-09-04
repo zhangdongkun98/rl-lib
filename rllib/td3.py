@@ -9,6 +9,7 @@ from torch.optim import Adam
 from .buffer import ReplayBufferOffPolicy as ReplayBuffer
 from .utils import init_weights, soft_update
 from .template import MethodSingleAgent, Model
+from .template.model import FeatureExtractor, FeatureMapper
 
 
 class TD3(MethodSingleAgent):
@@ -116,34 +117,32 @@ class Actor(Model):
     def __init__(self, config):
         super(Actor, self).__init__(config, model_id=0)
 
-        self.fc = nn.Sequential(
-            nn.Linear(config.dim_state, 256), nn.ReLU(),
-            nn.Linear(256, 256), nn.ReLU(),
-            nn.Linear(256, config.dim_action), nn.Tanh(),
-        )
+        self.fe = config.get('net_fe', FeatureExtractor)(config, 0)
+        self.fm = config.get('net_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
+        self.no = nn.Tanh()  ## normalize output
         self.apply(init_weights)
     
     def forward(self, state):
-        return self.fc(state)
+        x = self.fe(state)
+        return self.no(self.fm(x))
 
 
 class Critic(Model):
     def __init__(self, config):
         super(Critic, self).__init__(config, model_id=0)
 
-        self.fc1 = nn.Sequential(
-            nn.Linear(config.dim_state+config.dim_action, 256), nn.ReLU(),
-            nn.Linear(256, 256), nn.ReLU(),
-            nn.Linear(256, 1),
-        )
-        self.fc2 = copy.deepcopy(self.fc1)
+        self.fe = config.get('net_fe', FeatureExtractor)(config, 0)
+        self.fm1 = config.get('net_fm', FeatureMapper)(config, 0, self.fe.dim_feature+config.dim_action, 1)
+        self.fm2 = copy.deepcopy(self.fm1)
         self.apply(init_weights)
 
     def forward(self, state, action):
-        x = torch.cat([state, action], 1)
-        return self.fc1(x), self.fc2(x)
+        x = self.fe(state)
+        x = torch.cat([x, action], 1)
+        return self.fm1(x), self.fm2(x)
     
     def q1(self, state, action):
-        x = torch.cat([state, action], 1)
-        return self.fc1(x)
+        x = self.fe(state)
+        x = torch.cat([x, action], 1)
+        return self.fm1(x)
 

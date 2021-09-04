@@ -40,3 +40,38 @@ class Model(nn.Module):
     def __reduce_ex__(self, proto):
         return str(self)
 
+
+
+
+# =============================================================================
+# -- feature extraction -------------------------------------------------------
+# =============================================================================
+
+
+class FeatureExtractor(object):
+    def __init__(self, config, model_id):
+        self.dim_feature = config.dim_state
+    def __call__(self, x):
+        return x
+
+
+
+# =============================================================================
+# -- feature mapping ----------------------------------------------------------
+# =============================================================================
+
+
+class FeatureMapper(Model):
+    def __init__(self, config, model_id, dim_input, dim_output=1):
+        super().__init__(config, model_id)
+
+        self.fm = nn.Sequential(
+            nn.Linear(dim_input, 256), nn.ReLU(),
+            nn.Linear(256, 256), nn.ReLU(),
+            nn.Linear(256, dim_output),
+        )
+    
+    def forward(self, x):
+        return self.fm(x)
+
+

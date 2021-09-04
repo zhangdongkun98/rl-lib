@@ -1,4 +1,5 @@
 from .tools import *
+from .tools import setup_seed
 from .tools import flatten_list, calculate_quadrant
 
 from .coordinate_transformation import RotationMatrix, RotationMatrix2D, RotationMatrixTranslationVector, Euler, Reverse

@@ -6,11 +6,9 @@ import torch
 from rllib.args import generate_args
 
 
-def main():
-    config = rllib.basic.YamlConfig()
-    args = generate_args()
-    config.update(args)
 
+
+def init(config):
     ### common param
     seed = config.seed
     rllib.basic.setup_seed(config.seed)
@@ -21,6 +19,9 @@ def main():
     render = False
     solved_reward = 230
     max_episodes = 10000
+    config.set('render', render)
+    config.set('solved_reward', solved_reward)
+    config.set('max_episodes', max_episodes)
 
     env = gym.make(env_name)
     env.seed(seed)
@@ -41,10 +42,11 @@ def main():
     model_name = Method.__name__ + '-' + env_name
     writer = rllib.basic.create_dir(config, model_name)
     method = Method(config, writer)
+    return writer, env, method
 
-    #############################################
 
-    for i_episode in range(max_episodes):
+def train(config, writer, env, method):
+    for i_episode in range(config.max_episodes):
         running_reward = 0
         avg_length = 0
         state = env.reset()
@@ -64,11 +66,11 @@ def main():
 
             running_reward += reward
             avg_length += 1
-            if render: env.render()
+            if config.render: env.render()
             if done: break
         
         ### indicate the task is solved
-        if running_reward > solved_reward:
+        if running_reward > config.solved_reward:
             print("########## Solved! ##########")
             
         ### logging
@@ -77,7 +79,18 @@ def main():
         writer.add_scalar('index/avg_length', avg_length, i_episode)
 
 
-            
+def main():
+    config = rllib.basic.YamlConfig()
+    args = generate_args()
+    config.update(args)
+
+    writer, env, method = init(config)
+    try:
+        train(config, writer, env, method)
+    finally:
+        writer.close()
+
+
 if __name__ == '__main__':
     main()
     
