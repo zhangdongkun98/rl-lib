@@ -14,7 +14,8 @@ def func(self, rllib_data_func_name, *args, **kwargs):
             _func = getattr(value, rllib_data_func_name)
             new_dict[key] = _func(*args, **kwargs)
         else:
-            raise NotImplementedError
+            # raise NotImplementedError
+            new_dict[key] = 'NotImplementedError'
     return type(self)(**new_dict)
 
 
@@ -29,7 +30,8 @@ def attr(self, rllib_data_attr_name):
             _attr = getattr(value, rllib_data_attr_name)
             new_dict[key] = _attr
         else:
-            raise NotImplementedError
+            # raise NotImplementedError
+            new_dict[key] = 'NotImplementedError'
     return type(self)(**new_dict)
 
 
@@ -59,6 +61,18 @@ class Data(object):
     def __repr__(self):
         return str(self)
 
+    def __iter__(self):
+        """
+            warning: limited use
+        """
+        for (key, value) in self.__dict__.items():
+            # yield {key: value}
+            yield value
+
+
+    # =============================================================================
+    # -- dict ---------------------------------------------------------------------
+    # =============================================================================
 
     def to_dict(self):
         return self.__dict__
@@ -66,11 +80,46 @@ class Data(object):
     def keys(self):
         return list(self.__dict__.keys())
 
+    def pop(self, key):
+        return self.__dict__.pop(key)
+
+
+    # =============================================================================
+    # -- dict ---------------------------------------------------------------------
+    # =============================================================================
+
+    def stack(self, *args, **kwargs):
+        """
+            for torch.Tensor
+        """
+
+        new_dict = dict()
+        for (key, value) in self.__dict__.items():
+            if isinstance(value, Data):
+                new_dict[key] = value.stack(*args, **kwargs)
+            else:
+                new_dict[key] = torch.stack(value, *args, **kwargs)
+        return type(self)(**new_dict)        
+
+    def cat(self, *args, **kwargs):
+        """
+            for torch.Tensor
+        """
+
+        new_dict = dict()
+        for (key, value) in self.__dict__.items():
+            if isinstance(value, Data):
+                new_dict[key] = value.cat(*args, **kwargs)
+            else:
+                new_dict[key] = torch.cat(value, *args, **kwargs)
+        return type(self)(**new_dict)     
+
+
     
     def to_tensor(self):
-        '''
+        """
             for np.ndarray
-        '''
+        """
 
         new_dict = dict()
         for (key, value) in self.__dict__.items():
@@ -79,7 +128,8 @@ class Data(object):
             elif isinstance(value, Data):
                 new_dict[key] = value.to_tensor()
             else:
-                raise NotImplementedError
+                # raise NotImplementedError
+                new_dict[key] = torch.tensor(value)
         return type(self)(**new_dict)
 
 

@@ -117,8 +117,8 @@ class Actor(Model):
     def __init__(self, config):
         super(Actor, self).__init__(config, model_id=0)
 
-        self.fe = config.get('net_fe', FeatureExtractor)(config, 0)
-        self.fm = config.get('net_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
+        self.fe = config.get('net_actor_fe', FeatureExtractor)(config, 0)
+        self.fm = config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
         self.no = nn.Tanh()  ## normalize output
         self.apply(init_weights)
     
@@ -131,8 +131,8 @@ class Critic(Model):
     def __init__(self, config):
         super(Critic, self).__init__(config, model_id=0)
 
-        self.fe = config.get('net_fe', FeatureExtractor)(config, 0)
-        self.fm1 = config.get('net_fm', FeatureMapper)(config, 0, self.fe.dim_feature+config.dim_action, 1)
+        self.fe = config.get('net_critic_fe', FeatureExtractor)(config, 0)
+        self.fm1 = config.get('net_critic_fm', FeatureMapper)(config, 0, self.fe.dim_feature+config.dim_action, 1)
         self.fm2 = copy.deepcopy(self.fm1)
         self.apply(init_weights)
 
