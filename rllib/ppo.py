@@ -7,7 +7,7 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.distributions import Categorical, MultivariateNormal
 
-from .buffer import RolloutBufferOnPolicy as RolloutBuffer
+from .buffer import RolloutBuffer
 from .utils import init_weights, hard_update
 from .template import MethodSingleAgent, Model
 from .template.model import FeatureExtractor, FeatureMapper
@@ -18,9 +18,7 @@ class PPO(MethodSingleAgent):
     epsilon_clip = 0.2
     weight_value = 1.0
     weight_entropy = 0.001
-    # weight_entropy = 0.01
 
-    lr = 0.002
     lr = 0.0003
     betas = (0.9, 0.999)
 
@@ -28,7 +26,6 @@ class PPO(MethodSingleAgent):
     K_epochs = 10
     buffer_size = 2000
     batch_size = 0
-    # batch_size = 32
 
     save_model_interval = 20
 
@@ -133,62 +130,12 @@ class ActorCriticDiscrete(Model):
 
 
 
-class ActorCriticContinuousNew(Model):
+class ActorCriticContinuous(Model):
     """
         config: net_ac_fe, net_actor_fm, net_critic_fm
     """
 
-    logstd_min = -5
-    logstd_max = 1
-
-    def __init__(self, config):
-        super().__init__(config, model_id=0)
-        
-        self.fe = config.get('net_ac_fe', FeatureExtractor)(config, 0)
-        self.mean = config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
-        self.mean_no = nn.Tanh()
-        self.std = copy.deepcopy(self.mean)
-        self.std_no = nn.Tanh()
-        self.critic = config.get('net_critic_fm', FeatureMapper)(config, 0, self.fe.dim_feature, 1)
-        self.apply(init_weights)
-
-
-    def forward(self, state):
-        # x = self.fe(state)
-        x = state
-        mean = self.mean_no(self.mean(x))
-        logstd = self.std_no(self.std(x))
-        logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
-        logstd *= 0.5
-
-        cov = torch.diag_embed( torch.exp(logstd) )
-        dist = MultivariateNormal(mean, cov)
-        action = dist.sample()
-        logprob = dist.log_prob(action).unsqueeze(1)
-        return action, logprob, mean
-
-
-    def evaluate(self, state, action):
-        # x = self.fe(state)
-        x = state
-        mean = self.mean_no(self.mean(x))
-        logstd = self.std_no(self.std(x))
-        logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
-        logstd *= 0.5
-        value = self.critic(x)
-        
-        cov = torch.diag_embed( torch.exp(logstd) )
-        dist = MultivariateNormal(mean, cov)
-        logprob = dist.log_prob(action).unsqueeze(1)
-        entropy = dist.entropy().unsqueeze(1)
-        return logprob, value, entropy
-
-
-
-
-
-
-class ActorCriticContinuous(Model):
+    max_action = 2.0
 
     logstd_min = -2.5
     logstd_max = 1
@@ -198,39 +145,18 @@ class ActorCriticContinuous(Model):
 
         self.fe = config.get('net_ac_fe', FeatureExtractor)(config, 0)
 
-        self.mean = nn.Sequential(
-            nn.Linear(config.dim_state, 256), nn.ReLU(),
-            nn.Linear(256, 256), nn.ReLU(),
-            nn.Linear(256, config.dim_action),
-        )
-        # self.mean = config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
-        # self.mean_no = nn.Tanh()
-        self.std = copy.deepcopy(self.mean)
-        # self.std_no = nn.Tanh()
+        ### 特意没有用deepcopy
+        self.mean = config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
+        self.std = config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
 
-
-        # self.mean = nn.Sequential(
-        #     config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action),
-        #     nn.Tanh(),
-        # )
-        # self.std = copy.deepcopy(self.mean)
-
-
-        self.critic = nn.Sequential(
-                nn.Linear(config.dim_state, 256), nn.ReLU(),
-                nn.Linear(256, 256), nn.ReLU(),
-                nn.Linear(256, 1),
-        )
-
-
+        self.critic = config.get('net_critic_fm', FeatureMapper)(config, 0, self.fe.dim_feature, 1)
         self.apply(init_weights)
         
+
     def forward(self, state):
         x = self.fe(state)
-        # mean = self.mean_no(self.mean(x))
-        # logstd = self.std_no(self.std(x))
-        mean = self.mean(x)
-        logstd = self.std(x)
+        mean = torch.tanh(self.mean(x)) *self.max_action
+        logstd = torch.tanh(self.std(x))
         logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
         logstd *= 0.5
 
@@ -240,12 +166,11 @@ class ActorCriticContinuous(Model):
         logprob = dist.log_prob(action).unsqueeze(1)
         return action, logprob, mean
     
+
     def evaluate(self, state, action):
         x = self.fe(state)
-        # mean = self.mean_no(self.mean(x))
-        # logstd = self.std_no(self.std(x))
-        mean = self.mean(x)
-        logstd = self.std(x)
+        mean = torch.tanh(self.mean(x)) *self.max_action
+        logstd = torch.tanh(self.std(x))
         logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
         logstd *= 0.5
         value = self.critic(x)

@@ -7,7 +7,7 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.distributions import Normal, MultivariateNormal
 
-from .buffer import ReplayBufferOffPolicy as ReplayBuffer
+from .buffer import ReplayBuffer
 from .utils import init_weights, soft_update
 from .template import MethodSingleAgent, Model
 from .template.model import FeatureExtractor, FeatureMapper

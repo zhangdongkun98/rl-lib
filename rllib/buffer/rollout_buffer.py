@@ -6,6 +6,7 @@ from typing import List
 import torch
 
 from ..basic import Data as Experience
+from .tools import stack_data
 
 
 class RolloutBuffer(object):
@@ -62,31 +63,38 @@ class RolloutBuffer(object):
         self.rollout_reward = False
 
 
-    @abstractmethod
     def _batch_stack(self, batch):
-        return batch
+        """
+            To be override.
+        """
+
+        # state, action, prob, reward, done = [], [], [], [], []
+        # for e in batch:
+        #     state.append(e.state)
+        #     action.append(e.action)
+        #     prob.append(e.prob)
+        #     reward.append(e.reward)
+        #     done.append(e.done)
+
+        # state = torch.cat(state, dim=0)
+        # action = torch.cat(action, dim=0)
+        # prob = torch.cat(prob, dim=0)
+        # reward = torch.tensor(reward, dtype=torch.float32).unsqueeze(1)
+        # done = torch.tensor(done, dtype=torch.float32).unsqueeze(1)
+
+        # experience = Experience(
+        #     state=state,
+        #     prob=prob,
+        #     action=action, reward=reward, done=done)
+        # return experience
 
 
 
-class RolloutBufferOnPolicy(RolloutBuffer):
-    def _batch_stack(self, batch):
-        state, action, prob, reward, done = [], [], [], [], []
-        for e in batch:
-            state.append(e.state)
-            action.append(e.action)
-            prob.append(e.prob)
-            reward.append(e.reward)
-            done.append(e.done)
+        result = stack_data(batch)
 
-        state = torch.cat(state, dim=0)
-        action = torch.cat(action, dim=0)
-        prob = torch.cat(prob, dim=0)
-        reward = torch.tensor(reward, dtype=torch.float32).unsqueeze(1)
-        done = torch.tensor(done, dtype=torch.float32).unsqueeze(1)
-
-        experience = Experience(
-            state=state,
-            prob=prob,
-            action=action, reward=reward, done=done)
-        return experience
-
+        result.update(reward=[*torch.tensor(result.reward, dtype=torch.float32).unsqueeze(1)])
+        result.update(done=[*torch.tensor(result.done, dtype=torch.float32).unsqueeze(1)])
+        result = result.cat(dim=0)
+        result.reward.unsqueeze_(1)
+        result.done.unsqueeze_(1)
+        return result

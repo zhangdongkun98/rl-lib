@@ -1,6 +1,5 @@
 
 import numpy as np
-from abc import ABC, abstractmethod
 
 import torch
 
@@ -35,14 +34,12 @@ class ReplayBuffer(object):
     def full(self):
         return self.size >= self.capacity
 
-    @abstractmethod
+
     def _batch_stack(self, batch):
-        return batch
-
-
-
-class ReplayBufferOffPolicy(ReplayBuffer):
-    def _batch_stack(self, batch):
+        """
+            To be override.
+        """
+        
         result = stack_data(batch)
 
         result.update(reward=[*torch.tensor(result.reward, dtype=torch.float32).unsqueeze(1)])

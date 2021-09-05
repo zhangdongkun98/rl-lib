@@ -1,4 +1,4 @@
 from .tools import stack_data
 
-from .replay_buffer import ReplayBuffer, ReplayBufferOffPolicy
-from .rollout_buffer import RolloutBuffer, RolloutBufferOnPolicy
+from .replay_buffer import ReplayBuffer
+from .rollout_buffer import RolloutBuffer
