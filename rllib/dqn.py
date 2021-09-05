@@ -10,6 +10,8 @@ from torch.optim import Adam
 from .buffer import ReplayBufferOffPolicy as ReplayBuffer
 from .utils import init_weights, soft_update
 from .template import MethodSingleAgent, Model
+from .template.model import FeatureExtractor, FeatureMapper
+
 
 class DQN(MethodSingleAgent):
     gamma = 0.99
@@ -95,16 +97,12 @@ class ActorCritic(Model):
     def __init__(self, config):
         super(ActorCritic, self).__init__(config, model_id=0)
 
-        self.fc = nn.Sequential(
-            nn.Linear(config.dim_state, 256), nn.ReLU(),
-            nn.Linear(256, 256), nn.ReLU(),
-            nn.Linear(256, config.dim_action),
-        )
+        self.fe = config.get('net_ac_fe', FeatureExtractor)(config, 0)
+        self.fm = config.get('net_ac_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
         self.apply(init_weights)
 
 
     def forward(self, state):
-        return self.fc(state)
-    
-
+        x = self.fe(state)
+        return self.fm(x)
 

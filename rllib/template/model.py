@@ -74,4 +74,3 @@ class FeatureMapper(Model):
     def forward(self, x):
         return self.fm(x)
 
-

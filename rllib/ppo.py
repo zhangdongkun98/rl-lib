@@ -10,6 +10,7 @@ from torch.distributions import Categorical, MultivariateNormal
 from .buffer import RolloutBufferOnPolicy as RolloutBuffer
 from .utils import init_weights, hard_update
 from .template import MethodSingleAgent, Model
+from .template.model import FeatureExtractor, FeatureMapper
 
 
 class PPO(MethodSingleAgent):
@@ -17,7 +18,7 @@ class PPO(MethodSingleAgent):
     epsilon_clip = 0.2
     weight_value = 1.0
     weight_entropy = 0.001
-    weight_entropy = 0.01
+    # weight_entropy = 0.01
 
     lr = 0.002
     lr = 0.0003
@@ -27,7 +28,7 @@ class PPO(MethodSingleAgent):
     K_epochs = 10
     buffer_size = 2000
     batch_size = 0
-    batch_size = 32
+    # batch_size = 32
 
     save_model_interval = 20
 
@@ -53,11 +54,9 @@ class PPO(MethodSingleAgent):
             self.step_train += 1
 
             experience = self._memory.sample(self.gamma)
-
             old_states = experience.state
             old_actions = experience.action
             old_logprobs = experience.prob
-
             rewards = experience.reward
             rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
 
@@ -77,16 +76,19 @@ class PPO(MethodSingleAgent):
 
             self.optimizer.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), 0.1)
+            # torch.nn.utils.clip_grad_norm_(self.policy.parameters(), 0.1)
             self.optimizer.step()
 
             self.writer.add_scalar('loss/loss', loss.detach().item(), self.step_train)
-        
-        if self.step_update % self.save_model_interval == 0: self._save_model()
 
-        ### Copy new weights into old policy:
+
+        if self.step_update % self.save_model_interval == 0:
+            self._save_model()
+
         hard_update(self.policy_old, self.policy)
         self._memory.clear()
+        return
+
 
     @torch.no_grad()
     def select_action(self, state):
@@ -98,115 +100,159 @@ class PPO(MethodSingleAgent):
 
 
 class ActorCriticDiscrete(Model):
+    """
+        config: net_ac_fe, net_actor_fm, net_critic_fm
+    """
     def __init__(self, config):
         super().__init__(config, model_id=0)
 
-        self.actor = self.Actor(config)
-        self.critic = self.Critic(config)
+        self.fe = config.get('net_ac_fe', FeatureExtractor)(config, 0)
+        self.actor = config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
+        self.actor_no = nn.Softmax(dim=1)
+        self.critic = config.get('net_critic_fm', FeatureMapper)(config, 0, self.fe.dim_feature, 1)
         self.apply(init_weights)
 
 
     def forward(self, state):
-        action_probs = self.actor(state)
+        x = self.fe(state)
+        action_probs = self.actor_no(self.actor(x))
         dist = Categorical(action_probs)
         action = dist.sample()
         return action.unsqueeze(1), dist.log_prob(action).unsqueeze(1), action_probs
 
     def evaluate(self, state, action):
-        action_probs = self.actor(state)
+        x = self.fe(state)
+        action_probs = self.actor_no(self.actor(x))
+        state_value = self.critic(x)
 
         dist = Categorical(action_probs)
         action_logprobs = dist.log_prob(action.squeeze()).unsqueeze(1)
         dist_entropy = dist.entropy().unsqueeze(1)
 
-        state_value = self.critic(state)
         return action_logprobs, state_value, dist_entropy
 
-    class Actor(Model):
-        def __init__(self, config):
-            super().__init__(config, model_id=0)
-
-            self.fc = nn.Sequential(
-                nn.Linear(config.dim_state, 64), nn.Tanh(),
-                nn.Linear(64, 64), nn.Tanh(),
-                nn.Linear(64, config.dim_action), nn.Softmax(dim=1),
-            )
-        
-        def forward(self, state):
-            return self.fc(state)
-    
-    class Critic(Model):
-        def __init__(self, config):
-            super().__init__(config, model_id=0)
-
-            self.fc = nn.Sequential(
-                nn.Linear(config.dim_state, 64), nn.Tanh(),
-                nn.Linear(64, 64), nn.Tanh(),
-                nn.Linear(64, 1),
-            )
-        
-        def forward(self, state):
-            return self.fc(state)
 
 
-class ActorCriticContinuous(Model):
+class ActorCriticContinuousNew(Model):
+    """
+        config: net_ac_fe, net_actor_fm, net_critic_fm
+    """
+
+    logstd_min = -5
+    logstd_max = 1
+
     def __init__(self, config):
         super().__init__(config, model_id=0)
-
-        self.actor = self.Actor(config)
-        self.critic = self.Critic(config)
-        self.apply(init_weights)
         
+        self.fe = config.get('net_ac_fe', FeatureExtractor)(config, 0)
+        self.mean = config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
+        self.mean_no = nn.Tanh()
+        self.std = copy.deepcopy(self.mean)
+        self.std_no = nn.Tanh()
+        self.critic = config.get('net_critic_fm', FeatureMapper)(config, 0, self.fe.dim_feature, 1)
+        self.apply(init_weights)
+
+
     def forward(self, state):
-        action_mean, action_logstd = self.actor(state)
+        # x = self.fe(state)
+        x = state
+        mean = self.mean_no(self.mean(x))
+        logstd = self.std_no(self.std(x))
+        logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
+        logstd *= 0.5
 
-        cov = torch.diag_embed( torch.exp(action_logstd) )
-        dist = MultivariateNormal(action_mean, cov)
+        cov = torch.diag_embed( torch.exp(logstd) )
+        dist = MultivariateNormal(mean, cov)
         action = dist.sample()
-        return action, dist.log_prob(action).unsqueeze(1), action_mean
-    
-    def evaluate(self, state, action):
-        action_mean, action_logstd = self.actor(state)
+        logprob = dist.log_prob(action).unsqueeze(1)
+        return action, logprob, mean
 
-        cov = torch.diag_embed( torch.exp(action_logstd) )
-        dist = MultivariateNormal(action_mean, cov)
+
+    def evaluate(self, state, action):
+        # x = self.fe(state)
+        x = state
+        mean = self.mean_no(self.mean(x))
+        logstd = self.std_no(self.std(x))
+        logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
+        logstd *= 0.5
+        value = self.critic(x)
+        
+        cov = torch.diag_embed( torch.exp(logstd) )
+        dist = MultivariateNormal(mean, cov)
         logprob = dist.log_prob(action).unsqueeze(1)
         entropy = dist.entropy().unsqueeze(1)
-
-        value = self.critic(state)
         return logprob, value, entropy
 
 
-    class Actor(Model):
-        logstd_min = -1
-        logstd_max = 1
 
-        def __init__(self, config):
-            super().__init__(config, model_id=0)
 
-            self.mean = nn.Sequential(
-                nn.Linear(config.dim_state, 256), nn.ReLU(),
-                nn.Linear(256, 256), nn.ReLU(),
-                nn.Linear(256, config.dim_action), nn.Tanh(),
-            )
-            self.std = copy.deepcopy(self.mean)
-        
-        def forward(self, state):
-            mean = self.mean(state)
-            logstd = self.std(state)
-            logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
-            return mean, logstd *0.5
-    
-    class Critic(Model):
-        def __init__(self, config):
-            super().__init__(config, model_id=0)
 
-            self.fc = nn.Sequential(
+
+class ActorCriticContinuous(Model):
+
+    logstd_min = -2.5
+    logstd_max = 1
+
+    def __init__(self, config):
+        super().__init__(config, model_id=0)
+
+        self.fe = config.get('net_ac_fe', FeatureExtractor)(config, 0)
+
+        self.mean = nn.Sequential(
+            nn.Linear(config.dim_state, 256), nn.ReLU(),
+            nn.Linear(256, 256), nn.ReLU(),
+            nn.Linear(256, config.dim_action),
+        )
+        # self.mean = config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
+        # self.mean_no = nn.Tanh()
+        self.std = copy.deepcopy(self.mean)
+        # self.std_no = nn.Tanh()
+
+
+        # self.mean = nn.Sequential(
+        #     config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action),
+        #     nn.Tanh(),
+        # )
+        # self.std = copy.deepcopy(self.mean)
+
+
+        self.critic = nn.Sequential(
                 nn.Linear(config.dim_state, 256), nn.ReLU(),
                 nn.Linear(256, 256), nn.ReLU(),
                 nn.Linear(256, 1),
-            )
+        )
+
+
+        self.apply(init_weights)
         
-        def forward(self, state):
-            return self.fc(state)
+    def forward(self, state):
+        x = self.fe(state)
+        # mean = self.mean_no(self.mean(x))
+        # logstd = self.std_no(self.std(x))
+        mean = self.mean(x)
+        logstd = self.std(x)
+        logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
+        logstd *= 0.5
+
+        cov = torch.diag_embed( torch.exp(logstd) )
+        dist = MultivariateNormal(mean, cov)
+        action = dist.sample()
+        logprob = dist.log_prob(action).unsqueeze(1)
+        return action, logprob, mean
+    
+    def evaluate(self, state, action):
+        x = self.fe(state)
+        # mean = self.mean_no(self.mean(x))
+        # logstd = self.std_no(self.std(x))
+        mean = self.mean(x)
+        logstd = self.std(x)
+        logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
+        logstd *= 0.5
+        value = self.critic(x)
+
+        cov = torch.diag_embed( torch.exp(logstd) )
+        dist = MultivariateNormal(mean, cov)
+        logprob = dist.log_prob(action).unsqueeze(1)
+        entropy = dist.entropy().unsqueeze(1)
+        return logprob, value, entropy
 

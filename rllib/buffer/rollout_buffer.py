@@ -29,6 +29,8 @@ class RolloutBuffer(object):
 
     def sample(self, gamma):
         if not self.rollout_reward:
+            self.rollout_reward = True
+
             rewards = []
             discounted_reward = 0
             for e in reversed(self._memory):
