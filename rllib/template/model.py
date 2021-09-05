@@ -62,7 +62,7 @@ class FeatureExtractor(object):
 
 
 class FeatureMapper(Model):
-    def __init__(self, config, model_id, dim_input, dim_output=1):
+    def __init__(self, config, model_id, dim_input, dim_output):
         super().__init__(config, model_id)
 
         self.fm = nn.Sequential(

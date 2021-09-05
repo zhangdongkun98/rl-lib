@@ -54,6 +54,16 @@ class Critic(Model):
 
 ---
 
+
+# LunarLanderContinuous-v2, SAC
+
+- logstd_max设置为5（练不出来）与logstd_max设置为1（能练出来）：
+<p align="center"><img src="./images/2021-09-05-1.png" width="90%"><br></p>
+
+
+
+
+
 # notes
 
 - PPO的 K_epochs 参数不能过大，否则会越练越差(K_epochs=4 与 K_epochs=40的对比)
