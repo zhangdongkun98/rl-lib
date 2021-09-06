@@ -22,23 +22,25 @@ class PPO(MethodSingleAgent):
     lr = 0.0003
     betas = (0.9, 0.999)
 
-    K_epochs = 4
-    K_epochs = 10
     buffer_size = 2000
-    batch_size = 0
+    batch_size = 32
+    sample_reuse = 8
 
     save_model_interval = 20
 
     def __init__(self, config, writer):
         super(PPO, self).__init__(config, writer)
 
+        ### param
+        self.K_epochs = int(self.buffer_size / self.batch_size) * self.sample_reuse
+
         self.policy: Union[ActorCriticDiscrete, ActorCriticContinuous] = config.net_ac(config).to(self.device)
         self.policy_old = copy.deepcopy(self.policy)
         self.models_to_save = [self.policy]
 
         self.optimizer = Adam(self.policy.parameters(), lr=self.lr, betas=self.betas)
-        
         self.critic_loss = nn.MSELoss()
+
         self._memory: RolloutBuffer = config.get('buffer', RolloutBuffer)(self.device, self.batch_size)
 
 
@@ -73,7 +75,7 @@ class PPO(MethodSingleAgent):
 
             self.optimizer.zero_grad()
             loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.policy.parameters(), 0.1)
+            # torch.nn.utils.clip_grad_norm_(self.policy.parameters(), 10)
             self.optimizer.step()
 
             self.writer.add_scalar('loss/loss', loss.detach().item(), self.step_train)

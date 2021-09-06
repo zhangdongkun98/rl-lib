@@ -61,12 +61,17 @@ class Critic(Model):
 <p align="center"><img src="./images/2021-09-05-1.png" width="90%"><br></p>
 
 
+# LunarLanderContinuous-v2, PPO
+
+- batch_size=32(橙色)与batch_size=(64,128,256)(记不清了，绿色)对比：
+
 
 
 
 # notes
 
 - PPO的 K_epochs 参数不能过大，否则会越练越差(K_epochs=4 与 K_epochs=40的对比)
+<p align="center"><img src="./images/2021-09-06-1.png" width="90%"><br></p>
 
 
 - PPO: tricks to add
