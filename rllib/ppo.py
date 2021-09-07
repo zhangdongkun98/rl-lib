@@ -14,6 +14,10 @@ from .template.model import FeatureExtractor, FeatureMapper
 
 
 class PPO(MethodSingleAgent):
+    """
+        config: net_ac, buffer
+    """
+
     gamma = 0.99
     epsilon_clip = 0.2
     weight_value = 1.0

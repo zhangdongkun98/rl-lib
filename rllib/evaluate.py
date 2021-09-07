@@ -46,8 +46,8 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
 
         action_logprobs, state_value, dist_entropy = self.policy.evaluate(state, action)
 
-        print('action: ', action.cpu().data, 'mean: ', mean.cpu().data, 'value: ', state_value.item())
-        import pdb; pdb.set_trace()
+        # print('action: ', action.cpu().data, 'mean: ', mean.cpu().data, 'value: ', state_value.item())
+        # import pdb; pdb.set_trace()
         return mean.cpu().data
 
 
