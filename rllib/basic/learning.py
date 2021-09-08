@@ -10,7 +10,7 @@ import torch
 
 from .yaml import YamlConfig
 
-PathPack = namedtuple('PathPack', ('log_path', 'save_model_path', 'output_path'))
+PathPack = namedtuple('PathPack', ('log_path', 'save_model_path', 'output_path', 'code_path'))
 
 def create_dir(config: YamlConfig, model_name, mode='train'):
     '''
@@ -29,16 +29,58 @@ def create_dir(config: YamlConfig, model_name, mode='train'):
     log_path = join(work_path, 'results', dataset_name, 'log')
     save_model_path = join(work_path, 'results', dataset_name, 'saved_models')
     output_path = join(work_path, 'results', dataset_name, 'output')
+    code_path = join(work_path, 'results', dataset_name, 'code')
     os.makedirs(save_model_path, exist_ok=True)
     os.makedirs(output_path, exist_ok=True)
+    os.makedirs(code_path, exist_ok=True)
+
+    if config.get('github_repos', None) != None:
+        codes = pack_code(config.github_repos)
+        compress_code(code_path, codes)
 
     writer = Writer(log_dir=log_path, comment=dataset_name)
-    path_pack = PathPack(log_path, save_model_path, output_path)
+    path_pack = PathPack(log_path, save_model_path, output_path, code_path)
     config.set('path_pack', path_pack)
 
     with open(join('results', dataset_name, 'comments'), mode='w', encoding='utf-8') as _: pass
     # config.save(join('results', dataset_name))
     return writer
+
+
+def pack_code(repos):
+    origin_dir = os.getcwd()
+    import subprocess
+
+    codes = {}
+    for repo in repos:
+        repo = os.path.expanduser(repo)
+        os.chdir(repo)
+        repo_name = repo.split('/')[-1]
+
+        file1 = subprocess.getstatusoutput('git ls-files')[1].split('\n')
+        file2 = subprocess.getstatusoutput('git ls-files --others --exclude-standard')[1].split('\n')
+        if '' in file2: file2.remove('')
+        files = file1 + file2
+
+        codes[repo_name] = {'path': repo, 'files': files}
+        # print('[pack_code] packing repo: ', repo_name, repo)
+        # for i in files: print(i)
+        # print('\n\n\n')
+
+    os.chdir(origin_dir)
+    return codes
+
+
+def compress_code(save_dir, codes):
+    import zipfile
+    for repo, files in codes.items():
+        file_dir = files['path']
+        with zipfile.ZipFile(join(save_dir, repo +'.zip'), mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+            for file_name in files['files']:
+                zf.write(join(file_dir, file_name), arcname=file_name)
+    return
+
+
 
 
 class Writer(SummaryWriter):
