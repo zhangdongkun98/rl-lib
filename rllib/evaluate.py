@@ -12,7 +12,8 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
         self.model_dir = config.model_dir
         self.model_num = config.model_num
 
-        method_name = self.model_dir.split('/')[-3].split('-')[0]  ## ! todo
+        # method_name = self.model_dir.split('/')[-3].split('-')[0]
+        method_name = config.method.upper()
         config.set('method_name', method_name)
 
         if method_name == 'PPO':
