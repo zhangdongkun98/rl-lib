@@ -47,6 +47,9 @@ class YamlConfig(object):
             # raise NotImplementedError('warning: cannot imagine why need this.')
         setattr(self, key, value)
     
+    def delete(self, key):
+        delattr(self, key)
+
     
     def update(self, config):
         """
