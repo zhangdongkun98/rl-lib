@@ -48,7 +48,8 @@ class YamlConfig(object):
         setattr(self, key, value)
     
     def delete(self, key):
-        delattr(self, key)
+        if hasattr(self, key):
+            delattr(self, key)
 
     
     def update(self, config):

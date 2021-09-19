@@ -71,11 +71,10 @@ class PPO(MethodSingleAgent):
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1-self.epsilon_clip, 1+self.epsilon_clip) * advantages
 
-            loss =  - torch.min(surr1, surr2) \
-                    - self.weight_entropy*dist_entropy \
-                    + self.weight_value*self.critic_loss(state_values, rewards)
-
-            loss = loss.mean()
+            loss_surr = -torch.min(surr1, surr2).mean()
+            loss_entropy = -self.weight_entropy* dist_entropy.mean()
+            loss_value = self.weight_value* self.critic_loss(state_values, rewards)
+            loss = loss_surr + loss_entropy + loss_value
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -83,10 +82,14 @@ class PPO(MethodSingleAgent):
             self.optimizer.step()
 
             self.writer.add_scalar('loss/loss', loss.detach().item(), self.step_train)
+            self.writer.add_scalar('loss/loss_surr', loss_surr.detach().item(), self.step_train)
+            self.writer.add_scalar('loss/loss_entropy', loss_entropy.detach().item(), self.step_train)
+            self.writer.add_scalar('loss/loss_value', loss_value.detach().item(), self.step_train)
 
+            self.update_callback(locals())
 
-        if self.step_update % self.save_model_interval == 0:
-            self._save_model()
+            if self.step_train % self.save_model_interval == 0:
+                self._save_model()
 
         hard_update(self.policy_old, self.policy)
         self._memory.clear()
@@ -170,6 +173,7 @@ class ActorCriticContinuous(Model):
         dist = MultivariateNormal(mean, cov)
         action = dist.sample()
         logprob = dist.log_prob(action).unsqueeze(1)
+        # print('\n----std: ',torch.exp(logstd).squeeze() )  ## !
         return action, logprob, mean
     
 
