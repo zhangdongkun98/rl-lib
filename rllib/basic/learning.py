@@ -58,9 +58,10 @@ def pack_code(repos):
         repo_name = repo.split('/')[-1]
 
         file1 = subprocess.getstatusoutput('git ls-files')[1].split('\n')
+        filed = subprocess.getstatusoutput('git ls-files -d')[1].split('\n')
         file2 = subprocess.getstatusoutput('git ls-files --others --exclude-standard')[1].split('\n')
         if '' in file2: file2.remove('')
-        files = file1 + file2
+        files = list(set(file1 + file2) - set(filed))
 
         codes[repo_name] = {'path': repo, 'files': files}
         # print('[pack_code] packing repo: ', repo_name, repo)
