@@ -79,6 +79,9 @@ class Data(object):
 
     def keys(self):
         return list(self.__dict__.keys())
+    def values(self):
+        return list(self.__dict__.values())
+
 
     def pop(self, key):
         return self.__dict__.pop(key)

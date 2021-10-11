@@ -16,8 +16,8 @@ class Model(nn.Module):
         self.device = config.device
         self.dtype = torch.float32
 
-        self.dim_state = config.dim_state
-        self.dim_action = config.dim_action
+        self.dim_state = config.get('dim_state', None)
+        self.dim_action = config.get('dim_action', None)
 
     def load_model(self, model_id=None):
         model_dir = os.path.expanduser(self.model_dir)

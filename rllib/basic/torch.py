@@ -22,3 +22,24 @@ def jacobian(y, x):
         grad_outputs[:,i] = 1
         jac[i] = gradient(y, x, grad_outputs=grad_outputs)
     return jac
+
+
+
+
+def set_requires_grad(nets, requires_grad=False):
+    """Set requies_grad=Fasle for all the networks to avoid unnecessary computations
+
+    https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/models/base_model.py
+
+    Parameters:
+        nets (network list)   -- a list of networks
+        requires_grad (bool)  -- whether the networks require gradients or not
+    """
+    if not isinstance(nets, list):
+        nets = [nets]
+    for net in nets:
+        if net is not None:
+            for param in net.parameters():
+                param.requires_grad = requires_grad
+    return
+
