@@ -12,6 +12,8 @@ class Method(object):
     def __init__(self, config: YamlConfig, writer: Writer):
         config.set('method_name', self.__class__.__name__)
 
+        self.config = config
+
         self.device = config.device
         self.path_pack = config.path_pack
         self.writer = writer

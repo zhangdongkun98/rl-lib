@@ -10,5 +10,5 @@ from .data import Data
 
 from .system import set_trace
 
-from . import torch
+from . import pytorch
 
