@@ -37,7 +37,7 @@ def attr(self, rllib_data_attr_name):
 
 class Data(object):
     _func_numpy = []
-    _func_torch = ['squeeze', 'unsqueeze', 'to', 'numpy']
+    _func_torch = ['squeeze', 'unsqueeze', 'to', 'numpy', 'detach', 'requires_grad_']
     _func_names = ['repeat'] + _func_numpy + _func_torch
 
     _attr_numpy = []
