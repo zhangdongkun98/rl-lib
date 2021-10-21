@@ -18,8 +18,6 @@ def create_dir(config: YamlConfig, model_name, mode='train'):
         Args:
             config: need to contain:
                 config.description: str
-                config.method: str
-                config.eval: bool
     '''
     dataset_name = model_name + '/' + time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime(time.time())) + '----' + str(config.description)
     if mode == 'evaluate':
