@@ -5,17 +5,15 @@ from os.path import join
 
 
 def parse_yaml_file(file_path):
-    data = None
     with open(file_path) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
     return data
 
 def parse_yaml_file_unsafe(file_path):
-    data = None
-    with open(file_path) as f:
-        data = yaml.load(f, Loader=yaml.FullLoader)
+    # with open(file_path) as f:
+    #     data = yaml.load(f, Loader=yaml.FullLoader)
+    data = parse_yaml_file(file_path)
     config = YamlConfig(**data)
-    # config.set_path(os.path.abspath(file_path))
     return config
 
 
