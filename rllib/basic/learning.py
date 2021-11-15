@@ -20,7 +20,7 @@ def create_dir(config: YamlConfig, model_name, mode='train'):
                 config.description: str
     '''
     dataset_name = model_name + '/' + time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime(time.time())) + '----' + str(config.description)
-    if mode == 'evaluate':
+    if mode != 'train':
         dataset_name += '-' + mode
     print('create dir: ', dataset_name)
     work_path = os.getcwd()
