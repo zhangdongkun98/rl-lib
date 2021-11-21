@@ -9,13 +9,20 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
     def __init__(self, config, writer):
         super(EvaluateSingleAgent, self).__init__(config, writer)
 
-        self.model_dir = config.model_dir
-        self.model_num = config.model_num
+        self.config = config
 
-        # method_name = self.model_dir.split('/')[-3].split('-')[0]
+        self.model_dir, self.model_num = config.model_dir, config.model_num
+
         method_name = config.method.upper()
         config.set('method_name', method_name)
+        self.method_name = method_name
 
+        self.select_method()
+        self._load_model()
+        return
+    
+    def select_method(self, config):
+        config, method_name = self.config, self.method_name
         if method_name == 'PPO':
             from . import ppo
             self.policy: Union[ppo.ActorCriticDiscrete, ppo.ActorCriticContinuous] = config.net_ac(config).to(self.device)
@@ -29,18 +36,20 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
             self.select_action = self.select_action_td3
         else:
             raise NotImplementedError('No such method: ' + str(method_name))
-        
-        self._load_model()
         return
-    
+
+
 
     def store(self, experience):
+        return
+
+    def update_parameters(self):
         return
 
 
     @torch.no_grad()
     def select_action_ppo(self, state):
-        super().select_action()
+        self.select_action_start()
         
         state = state.to(self.device)
         action, logprob, mean = self.policy(state)
@@ -54,7 +63,7 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
 
     @torch.no_grad()
     def select_action_td3(self, state):
-        super().select_action()
+        self.select_action_start()
 
         state = state.to(self.device)
         action = self.actor(state)

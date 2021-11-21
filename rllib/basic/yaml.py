@@ -41,7 +41,9 @@ class YamlConfig(object):
     
     def set(self, key, value):
         if hasattr(self, key):
-            print('[YamlConfig] warning: cannot imagine why need this: set {} to {}'.format(key, str(value)))
+            print('[YamlConfig] warning: cannot imagine why need this: set {} from {} to {}'.format(
+                key, str(getattr(self, key)), str(value)
+            ))
             # raise NotImplementedError('warning: cannot imagine why need this.')
         setattr(self, key, value)
     

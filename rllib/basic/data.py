@@ -91,7 +91,7 @@ class Data(object):
     # -- dict ---------------------------------------------------------------------
     # =============================================================================
 
-    def stack(self, *args, **kwargs):
+    def stack(self, *args, **kwargs):  ## ! TODO, change as cat
         """
             for torch.Tensor
         """
@@ -102,7 +102,7 @@ class Data(object):
                 new_dict[key] = value.stack(*args, **kwargs)
             else:
                 new_dict[key] = torch.stack(value, *args, **kwargs)
-        return type(self)(**new_dict)        
+        return type(self)(**new_dict)
 
     def cat(self, *args, **kwargs):
         """
@@ -113,9 +113,12 @@ class Data(object):
         for (key, value) in self.__dict__.items():
             if isinstance(value, Data):
                 new_dict[key] = value.cat(*args, **kwargs)
-            else:
+            # elif isinstance(value, torch.Tensor):
+            elif all([isinstance(v, torch.Tensor) for v in value]):
                 new_dict[key] = torch.cat(value, *args, **kwargs)
-        return type(self)(**new_dict)     
+            else:
+                new_dict[key] = torch.as_tensor(value)
+        return type(self)(**new_dict)
 
 
     
@@ -148,4 +151,12 @@ class Data(object):
             return _attr()
         else:
             return object.__getattribute__(self, attribute)
+
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            value = getattr(self, self.keys()[key])
+        else:
+            raise NotImplementedError
+        return value
 

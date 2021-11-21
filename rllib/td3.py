@@ -51,7 +51,7 @@ class TD3(MethodSingleAgent):
     def update_parameters(self):
         if len(self._memory) < self.start_timesteps:
             return
-        super().update_parameters()
+        self.update_parameters_start()
 
         '''load data batch'''
         experience = self._memory.sample()
@@ -96,7 +96,7 @@ class TD3(MethodSingleAgent):
 
     @torch.no_grad()
     def select_action(self, state):
-        super().select_action()
+        self.select_action_start()
 
         if self.step_select < self.start_timesteps:
             action = torch.Tensor(1,self.dim_action).uniform_(-1,1)
@@ -114,11 +114,11 @@ class TD3(MethodSingleAgent):
 
 
 class Actor(Model):
-    def __init__(self, config):
-        super(Actor, self).__init__(config, model_id=0)
+    def __init__(self, config, model_id=0):
+        super(Actor, self).__init__(config, model_id)
 
-        self.fe = config.get('net_actor_fe', FeatureExtractor)(config, 0)
-        self.fm = config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
+        self.fe = config.get('net_actor_fe', FeatureExtractor)(config, model_id)
+        self.fm = config.get('net_actor_fm', FeatureMapper)(config, model_id, self.fe.dim_feature, config.dim_action)
         self.no = nn.Tanh()  ## normalize output
         self.apply(init_weights)
     
@@ -128,11 +128,11 @@ class Actor(Model):
 
 
 class Critic(Model):
-    def __init__(self, config):
-        super(Critic, self).__init__(config, model_id=0)
+    def __init__(self, config, model_id=0):
+        super(Critic, self).__init__(config, model_id)
 
-        self.fe = config.get('net_critic_fe', FeatureExtractor)(config, 0)
-        self.fm1 = config.get('net_critic_fm', FeatureMapper)(config, 0, self.fe.dim_feature+config.dim_action, 1)
+        self.fe = config.get('net_critic_fe', FeatureExtractor)(config, model_id)
+        self.fm1 = config.get('net_critic_fm', FeatureMapper)(config, model_id, self.fe.dim_feature+config.dim_action, 1)
         self.fm2 = copy.deepcopy(self.fm1)
         self.apply(init_weights)
 

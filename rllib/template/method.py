@@ -34,7 +34,7 @@ class Method(object):
         [model.load_model() for model in self.models_to_load]
         return
 
-    def update_parameters(self):
+    def update_parameters_start(self):
         self.step_update += 1
 
     def update_callback(self, local):
@@ -52,7 +52,7 @@ class MethodSingleAgent(Method):
 
         self._memory = None
 
-    def select_action(self):
+    def select_action_start(self):
         self.step_select += 1
 
     def store(self, experience):
