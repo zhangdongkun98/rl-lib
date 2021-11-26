@@ -58,7 +58,7 @@ class SAC(MethodSingleAgent):
     def update_parameters(self):
         if len(self._memory) < self.start_timesteps:
             return
-        super().update_parameters()
+        self.update_parameters_start()
 
         '''load data batch'''
         experience = self._memory.sample()
@@ -111,7 +111,7 @@ class SAC(MethodSingleAgent):
 
     @torch.no_grad()
     def select_action(self, state):
-        super().select_action()
+        self.select_action_start()
 
         if self.step_select < self.start_timesteps:
             action = torch.Tensor(1,self.dim_action).uniform_(-1,1)

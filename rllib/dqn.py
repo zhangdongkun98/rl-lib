@@ -46,7 +46,7 @@ class DQN(MethodSingleAgent):
     def update_parameters(self):
         if len(self._memory) < self.start_timesteps:
             return
-        super().update_parameters()
+        self.update_parameters_start()
 
         '''load data batch'''
         experience = self._memory.sample()
@@ -78,7 +78,7 @@ class DQN(MethodSingleAgent):
 
     @torch.no_grad()
     def select_action(self, state):
-        super().select_action()
+        self.select_action_start()
 
         if random.random() < self.epsilon_prob:
             action = torch.tensor(random.choice(range(self.dim_action))).reshape(1,-1)

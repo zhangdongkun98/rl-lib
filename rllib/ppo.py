@@ -51,7 +51,7 @@ class PPO(MethodSingleAgent):
     def update_parameters(self):
         if len(self._memory) < self.buffer_size:
             return
-        super().update_parameters()
+        self.update_parameters_start()
 
         for _ in range(self.K_epochs):
             self.step_train += 1
@@ -98,7 +98,7 @@ class PPO(MethodSingleAgent):
 
     @torch.no_grad()
     def select_action(self, state):
-        super().select_action()
+        self.select_action_start()
         action, logprob, _ = self.policy_old(state.to(self.device))
         self._memory.push_prob(logprob)
         return action
@@ -173,7 +173,6 @@ class ActorCriticContinuous(Model):
         dist = MultivariateNormal(mean, cov)
         action = dist.sample()
         logprob = dist.log_prob(action).unsqueeze(1)
-        # print('\n----std: ',torch.exp(logstd).squeeze() )  ## !
         return action, logprob, mean
     
 

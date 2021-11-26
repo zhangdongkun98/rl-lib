@@ -39,7 +39,7 @@ class Method(object):
 
     def update_callback(self, local):
         local.pop('self')
-        local.pop('__class__')
+        # local.pop('__class__')
         return Data(**local)
 
 

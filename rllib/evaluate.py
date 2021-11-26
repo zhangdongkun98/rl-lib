@@ -21,7 +21,7 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
         self._load_model()
         return
     
-    def select_method(self, config):
+    def select_method(self):
         config, method_name = self.config, self.method_name
         if method_name == 'PPO':
             from . import ppo
