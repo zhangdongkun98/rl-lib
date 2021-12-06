@@ -86,6 +86,18 @@ def prob2onehot(prob, length):
 
 
 
+
+def numpy_gather(ndarray, dim, index):
+    tensor = torch.from_numpy(ndarray)
+    index_index = torch.from_numpy(index)
+    res = torch.gather(tensor, dim=dim, index=index_index)
+    return res.numpy()
+
+
+
+
+
+
 import matplotlib.pyplot as plt
 def plotArrow2D(x, y, theta, length=1.0, width=0.5, fc='r', ec='k'):  # pragma: no cover
     plt.arrow(x, y, length * np.cos(theta), length * np.sin(theta),

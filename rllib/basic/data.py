@@ -1,5 +1,6 @@
 
 import numpy as np
+import copy
 import torch
 
 
@@ -37,7 +38,7 @@ def attr(self, rllib_data_attr_name):
 
 class Data(object):
     _func_numpy = []
-    _func_torch = ['squeeze', 'unsqueeze', 'to', 'numpy', 'detach', 'requires_grad_']
+    _func_torch = ['squeeze', 'unsqueeze', 'to', 'cpu', 'numpy', 'detach', 'requires_grad_']
     _func_names = ['repeat'] + _func_numpy + _func_torch
 
     _attr_numpy = []
@@ -51,6 +52,17 @@ class Data(object):
         for (key, value) in kwargs.items():
             setattr(self, key, value)
         return
+    
+    def merge(self, data):
+        self.update(**data.to_dict())
+
+    def __add__(self, data):
+        """
+            warning: use copy.copy rather than copy.deepcopy
+        """
+        d = copy.copy(self)
+        d.merge(data)
+        return d
 
     def __str__(self):
         res = ''

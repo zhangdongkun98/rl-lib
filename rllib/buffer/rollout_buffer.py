@@ -68,28 +68,6 @@ class RolloutBuffer(object):
             To be override.
         """
 
-        # state, action, prob, reward, done = [], [], [], [], []
-        # for e in batch:
-        #     state.append(e.state)
-        #     action.append(e.action)
-        #     prob.append(e.prob)
-        #     reward.append(e.reward)
-        #     done.append(e.done)
-
-        # state = torch.cat(state, dim=0)
-        # action = torch.cat(action, dim=0)
-        # prob = torch.cat(prob, dim=0)
-        # reward = torch.tensor(reward, dtype=torch.float32).unsqueeze(1)
-        # done = torch.tensor(done, dtype=torch.float32).unsqueeze(1)
-
-        # experience = Experience(
-        #     state=state,
-        #     prob=prob,
-        #     action=action, reward=reward, done=done)
-        # return experience
-
-
-
         result = stack_data(batch)
 
         result.update(reward=[*torch.tensor(result.reward, dtype=torch.float32).unsqueeze(1)])
