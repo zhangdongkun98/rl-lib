@@ -1,5 +1,9 @@
 
+import numpy as np
+
 import torch
+import torch.nn as nn
+from torch.optim import Adam
 
 
 def gradient(y, x, grad_outputs=None):
@@ -42,4 +46,44 @@ def set_requires_grad(nets, requires_grad=False):
             for param in net.parameters():
                 param.requires_grad = requires_grad
     return
+
+
+
+
+
+from torch.optim import Adam
+
+
+class ModelArgMin(nn.Module):
+    lr = 1e-1
+    num_iter = 100
+
+    def __init__(self, model: nn.Module, reverse=False):
+        super().__init__()
+        self.model = model
+        self.sign = -1 if reverse else 1
+
+
+    def forward(self, x0: torch.Tensor, args: torch.Tensor):
+        x = x0.clone()
+        x.requires_grad = True
+        optimizer = Adam(params=[x], lr=self.lr)
+
+        for i in range(self.num_iter):
+            optimizer.zero_grad()
+
+            value: torch.Tensor = self.forward_model(x, args) * self.sign
+            loss = value.sum(dim=0)
+            # loss.backward(retain_graph=True)
+            loss.backward()
+            optimizer.step()
+
+        return x.detach().clone()
+
+
+    def forward_model(self, x0, args):
+        return self.model(x0, args)
+
+
+
 
