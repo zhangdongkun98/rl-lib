@@ -95,6 +95,42 @@ def numpy_gather(ndarray, dim, index):
 
 
 
+def pad_tensor(data: torch.Tensor, pad_size: torch.Size, pad_value=np.inf):
+    """
+    Args:
+        data, pad_size: torch.Size([batch_size, dim_elements, dim_points, dim_features])
+    """
+    res = torch.full(pad_size, pad_value, dtype=data.dtype, device=data.device)
+
+    if len(pad_size) == 3:
+        batch_size, dim_elements, dim_points = data.shape
+        res[:batch_size, :dim_elements, :dim_points] = data
+    elif len(pad_size) == 4:
+        batch_size, dim_elements, dim_points, dim_features = data.shape
+        res[:batch_size, :dim_elements, :dim_points, :dim_features] = data
+    else:
+        raise NotImplementedError
+    return res
+
+
+def pad_array(data: np.ndarray, pad_size: tuple, pad_value=np.inf):
+    res = np.full(pad_size, pad_value, dtype=data.dtype)
+
+    if len(pad_size) == 2:
+        d1, d2 = data.shape
+        res[:d1, :d2] = data
+    elif len(pad_size) == 3:
+        d1, d2, d3 = data.shape
+        res[:d1, :d2, :d3] = data
+    elif len(pad_size) == 4:
+        d1, d2, d3, d4 = data.shape
+        res[:d1, :d2, :d3, :d4] = data
+    else:
+        raise NotImplementedError
+    return res
+
+
+
 
 
 

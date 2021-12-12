@@ -3,6 +3,8 @@ from typing import ValuesView
 import yaml
 from os.path import join
 
+from .system import get_type_name
+
 
 def parse_yaml_file(file_path):
     with open(file_path) as f:
@@ -41,8 +43,8 @@ class YamlConfig(object):
     
     def set(self, key, value):
         if hasattr(self, key):
-            print('[YamlConfig] warning: cannot imagine why need this: set {} from {} to {}'.format(
-                key, str(getattr(self, key)), str(value)
+            print('[{}.set] warning: cannot imagine why need this: set {} from {} to {}'.format(
+                get_type_name(self), key, str(getattr(self, key)), str(value)
             ))
             # raise NotImplementedError('warning: cannot imagine why need this.')
         setattr(self, key, value)
@@ -66,7 +68,7 @@ class YamlConfig(object):
 
         for attribute in dir(config):
             if attribute in block_words:
-                if not isinstance(config, YamlConfig): print('[YamlConfig] ignore attribute: ', attribute)
+                if not isinstance(config, YamlConfig): print('[{}.update] ignore attribute: '.format(get_type_name(self)), attribute)
                 continue
             if not attribute.startswith('_'):
                 setattr(self, attribute, getattr(config, attribute))

@@ -7,6 +7,7 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.distributions import Categorical, MultivariateNormal
 
+from .basic import get_type_name
 from .buffer import RolloutBuffer
 from .utils import init_weights, hard_update
 from .template import MethodSingleAgent, Model
@@ -52,6 +53,7 @@ class PPO(MethodSingleAgent):
         if len(self._memory) < self.buffer_size:
             return
         self.update_parameters_start()
+        print('[{}.update_parameters] update step: '.format(get_type_name(self)), self.step_update)
 
         for _ in range(self.K_epochs):
             self.step_train += 1
