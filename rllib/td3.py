@@ -29,6 +29,7 @@ class TD3(MethodSingleAgent):
     noise_clip = 0.5
 
     start_timesteps = 30000
+    delay_actor = 0
 
     save_model_interval = 200
 
@@ -64,7 +65,7 @@ class TD3(MethodSingleAgent):
         '''critic'''
         with torch.no_grad():
             noise = (torch.randn_like(action) * self.policy_noise).clamp(-self.noise_clip, self.noise_clip)
-            next_action = (self.actor_target(next_state) + noise).clamp(-1,1)
+            next_action = (self.actor_target(next_state, step_update=self.step_update) + noise).clamp(-1,1)
 
             target_q1, target_q2 = self.critic_target(next_state, next_action)
             target_q = torch.min(target_q1, target_q2)
@@ -75,9 +76,10 @@ class TD3(MethodSingleAgent):
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
+        self.writer.add_scalar('loss/c_loss', critic_loss.detach().item(), self.step_update)
 
         '''actor'''
-        if self.step_update % self.policy_freq == 0:
+        if self.step_update > self.delay_actor and self.step_update % self.policy_freq == 0:
             actor_loss = -self.critic.q1(state, self.actor(state)).mean()
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
@@ -85,7 +87,6 @@ class TD3(MethodSingleAgent):
             self._update_model()
 
             self.writer.add_scalar('loss/a_loss', actor_loss.detach().item(), self.step_update)
-        self.writer.add_scalar('loss/c_loss', critic_loss.detach().item(), self.step_update)
 
         if self.step_update % self.save_model_interval == 0:
             self._save_model()
@@ -122,8 +123,8 @@ class Actor(Model):
         self.no = nn.Tanh()  ## normalize output
         self.apply(init_weights)
     
-    def forward(self, state):
-        x = self.fe(state)
+    def forward(self, state, **kwargs):
+        x = self.fe(state, **kwargs)
         return self.no(self.fm(x))
 
 

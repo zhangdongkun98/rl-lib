@@ -39,6 +39,9 @@ echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco200/bin" >> ~/
 sudo apt-get install libosmesa6-dev
 sudo apt-get install patchelf
 
+sudo apt-get install libglew-dev
+echo "export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so" >> ~/.bashrc
+
 pip install mujoco-py==2.0.2.7
 ```
 

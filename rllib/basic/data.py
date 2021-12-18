@@ -87,6 +87,9 @@ class Data(object):
     # =============================================================================
 
     def to_dict(self):
+        """
+            todo: recursion
+        """
         return self.__dict__
 
     def keys(self):

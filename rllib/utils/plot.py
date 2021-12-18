@@ -42,7 +42,8 @@ def smooth(scalars, alpha):
 
 colors = ['cornflowerblue', 'limegreen', 'darkorange']
 args = generate_args()
-file_paths = sorted(glob.glob(join(args.file_dir, '*.txt')))
+# file_paths = sorted(glob.glob(join(args.file_dir, '*.txt')))
+file_paths = sorted(glob.glob(join(args.file_dir, '*')))
 print('path: ', file_paths)
 
 
@@ -57,7 +58,7 @@ def plot_reward(reward, idx, label):
     # import pdb; pdb.set_trace()
     print(label)
 
-    plt.plot(mean, color=colors[idx], label=label)
+    plt.plot(mean, color=colors[idx], label=label, linewidth=3)
     # plt.fill_between(np.arange(len(reward)), mean-std, mean+std, interpolate=True, color=colors[idx], alpha=0.3)
     plt.plot(reward, color=colors[idx], alpha=0.3)
     # plt.plot(variance, color=colors[idx], alpha=0.3)

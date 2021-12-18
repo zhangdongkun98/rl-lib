@@ -55,7 +55,7 @@ class MethodSingleAgent(Method):
     def select_action_start(self):
         self.step_select += 1
 
-    def store(self, experience):
-        self._memory.push(experience)
+    def store(self, experience, **kwargs):
+        self._memory.push(experience, **kwargs)
 
 
