@@ -97,9 +97,9 @@ class SAC(MethodSingleAgent):
 
         self.alpha = self.log_alpha.exp().detach()
 
-        self.writer.add_scalar('loss/c_loss', critic_loss.detach().item(), self.step_update)
-        self.writer.add_scalar('loss/a_loss', actor_loss.detach().item(), self.step_update)
-        self.writer.add_scalar('loss/alpha', self.alpha.detach().item(), self.step_update)
+        self.writer.add_scalar('method/loss_critic', critic_loss.detach().item(), self.step_update)
+        self.writer.add_scalar('method/loss_actor', actor_loss.detach().item(), self.step_update)
+        self.writer.add_scalar('method/alpha', self.alpha.detach().item(), self.step_update)
 
         self._update_model()
         if self.step_update % self.save_model_interval == 0:

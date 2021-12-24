@@ -70,8 +70,8 @@ class DQN(MethodSingleAgent):
         loss.backward()
         self.optimizer.step()
 
-        self.writer.add_scalar('loss/loss', loss.detach().item(), self.step_update)
-        self.writer.add_scalar('index/epsilon_prob', self.epsilon_prob, self.step_update)
+        self.writer.add_scalar('method/loss', loss.detach().item(), self.step_update)
+        self.writer.add_scalar('method/epsilon_prob', self.epsilon_prob, self.step_update)
         if self.step_update % self.save_model_interval == 0: self._save_model()
         return
 

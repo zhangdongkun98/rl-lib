@@ -9,7 +9,11 @@ setup(
     url='https://github.com/zhangdongkun98/rl-lib',
     description='A lib for RL.',
     install_requires=[
-        
+        'numpy', 'scipy',
+        'matplotlib', 'seaborn',
+        'tensorboardX',
+        'PyYAML',
+        'psutil', 'pynvml',
     ],
 
     include_package_data=True

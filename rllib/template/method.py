@@ -50,12 +50,12 @@ class MethodSingleAgent(Method):
         self.dim_state, self.dim_action = config.dim_state, config.dim_action
         self.step_select = -1
 
-        self._memory = None
+        self.buffer = None
 
     def select_action_start(self):
         self.step_select += 1
 
     def store(self, experience, **kwargs):
-        self._memory.push(experience, **kwargs)
+        self.buffer.push(experience, **kwargs)
 
 

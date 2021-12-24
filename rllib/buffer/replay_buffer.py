@@ -14,7 +14,7 @@ class ReplayBuffer(object):
         self.memory = np.empty(self.capacity, dtype=Experience)
         self.num_visits = np.zeros(self.capacity, dtype=np.int64)
         
-    def push(self, experience):
+    def push(self, experience, **kwargs):
         self.memory[self.size % self.capacity] = experience
         self.size += 1
 

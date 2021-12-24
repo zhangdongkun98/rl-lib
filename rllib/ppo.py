@@ -83,10 +83,10 @@ class PPO(MethodSingleAgent):
             # torch.nn.utils.clip_grad_norm_(self.policy.parameters(), 10)
             self.optimizer.step()
 
-            self.writer.add_scalar('loss/loss', loss.detach().item(), self.step_train)
-            self.writer.add_scalar('loss/loss_surr', loss_surr.detach().item(), self.step_train)
-            self.writer.add_scalar('loss/loss_entropy', loss_entropy.detach().item(), self.step_train)
-            self.writer.add_scalar('loss/loss_value', loss_value.detach().item(), self.step_train)
+            self.writer.add_scalar('method/loss', loss.detach().item(), self.step_train)
+            self.writer.add_scalar('method/loss_surr', loss_surr.detach().item(), self.step_train)
+            self.writer.add_scalar('method/loss_entropy', loss_entropy.detach().item(), self.step_train)
+            self.writer.add_scalar('method/loss_value', loss_value.detach().item(), self.step_train)
 
             self.update_callback(locals())
 

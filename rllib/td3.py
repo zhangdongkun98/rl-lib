@@ -46,16 +46,17 @@ class TD3(MethodSingleAgent):
         self.actor_optimizer = Adam(self.actor.parameters(), lr=self.lr_actor)
         self.critic_loss = nn.MSELoss()
 
-        self._memory: ReplayBuffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, self.device)
+        self.buffer: ReplayBuffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, self.device)
 
 
     def update_parameters(self):
-        if len(self._memory) < self.start_timesteps:
+        if len(self.buffer) < self.start_timesteps:
             return
         self.update_parameters_start()
+        self.writer.add_scalar('method/buffer_size', len(self.buffer), self.step_update)
 
         '''load data batch'''
-        experience = self._memory.sample()
+        experience = self.buffer.sample()
         state = experience.state
         action = experience.action
         next_state = experience.next_state
@@ -76,7 +77,7 @@ class TD3(MethodSingleAgent):
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
-        self.writer.add_scalar('loss/c_loss', critic_loss.detach().item(), self.step_update)
+        self.writer.add_scalar('method/loss_critic', critic_loss.detach().item(), self.step_update)
 
         '''actor'''
         if self.step_update > self.delay_actor and self.step_update % self.policy_freq == 0:
@@ -86,7 +87,7 @@ class TD3(MethodSingleAgent):
             self.actor_optimizer.step()
             self._update_model()
 
-            self.writer.add_scalar('loss/a_loss', actor_loss.detach().item(), self.step_update)
+            self.writer.add_scalar('method/loss_actor', actor_loss.detach().item(), self.step_update)
 
         if self.step_update % self.save_model_interval == 0:
             self._save_model()

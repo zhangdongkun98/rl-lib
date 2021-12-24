@@ -76,8 +76,8 @@ class DDPG(MethodSingleAgent):
         self.actor_optimizer.step()
         self._update_model()
 
-        self.writer.add_scalar('loss/a_loss', actor_loss.detach().item(), self.step_update)
-        self.writer.add_scalar('loss/c_loss', critic_loss.detach().item(), self.step_update)
+        self.writer.add_scalar('method/loss_actor', actor_loss.detach().item(), self.step_update)
+        self.writer.add_scalar('method/loss_critic', critic_loss.detach().item(), self.step_update)
         
         if self.step_update % self.save_model_interval == 0: self._save_model()
         return
