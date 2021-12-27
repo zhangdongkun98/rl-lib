@@ -190,6 +190,7 @@ def calculate_quadrant(point):
 
 
 def setup_seed(seed):
+    print('[{}] [setup_seed] seed is: '.format(__file__), seed)
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)

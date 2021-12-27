@@ -36,8 +36,9 @@ def create_dir(config: YamlConfig, model_name, mode='train'):
         codes = pack_code(config.github_repos)
         compress_code(code_path, codes)
 
-    writer = Writer(log_dir=log_path, comment=dataset_name)
+    writer = Writer(log_dir=log_path, comment=dataset_name, max_queue=100)
     path_pack = PathPack(log_path, save_model_path, output_path, code_path)
+    config.set('dataset_name', dataset_name)
     config.set('path_pack', path_pack)
 
     with open(join('results', dataset_name, 'comments'), mode='w', encoding='utf-8') as _: pass
@@ -93,7 +94,7 @@ class Writer(SummaryWriter):
         dir_name = file_name.split('tfevents.')[-1].split('.')[0] + '--log'
 
         self.data_dir = join(file_dir, dir_name)
-        os.makedirs(self.data_dir)
+        os.makedirs(self.data_dir, exist_ok=True)
 
         self.data_cache = dict()
     

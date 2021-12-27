@@ -43,8 +43,8 @@ class Model(nn.Module):
         model_path = join(path, model_name)
         torch.save(self.state_dict(), model_path)
 
-    def __reduce_ex__(self, proto):
-        return str(self)
+    # def __reduce_ex__(self, proto):  ## ! todo
+    #     return str(self)
 
 
 

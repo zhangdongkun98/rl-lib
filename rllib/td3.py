@@ -40,13 +40,14 @@ class TD3(MethodSingleAgent):
         self.actor = config.get('net_actor', Actor)(config).to(self.device)
         self.critic_target = copy.deepcopy(self.critic)
         self.actor_target = copy.deepcopy(self.actor)
+        self.models = [self.critic, self.actor, self.critic_target, self.actor_target]
         self.models_to_save = [self.critic, self.actor]
 
         self.critic_optimizer= Adam(self.critic.parameters(), lr=self.lr_critic)
         self.actor_optimizer = Adam(self.actor.parameters(), lr=self.lr_actor)
         self.critic_loss = nn.MSELoss()
 
-        self.buffer: ReplayBuffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, self.device)
+        self.buffer: ReplayBuffer = config.get('buffer', ReplayBuffer)(config, self.buffer_size, self.batch_size, self.device)
 
 
     def update_parameters(self):

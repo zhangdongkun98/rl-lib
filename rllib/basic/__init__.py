@@ -1,6 +1,6 @@
 from .data import Data
 
-from .system import set_trace, get_type_name, silent
+from .system import set_trace, get_class_name, spin, silent
 
 from .tools import *
 from .tools import numpy_gather

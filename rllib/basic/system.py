@@ -17,8 +17,27 @@ def set_trace(local):
 
 
 
-def get_type_name(x):
+def get_class_name(x):
     return str(type(x))[8:-2]
+
+
+def get_method_name():
+    import inspect
+    f_name = inspect.getframeinfo(inspect.currentframe().f_back)[2]
+    return f_name
+
+
+
+def spin(secs=5.0, func=None, args=(), kwargs={}):
+    import time
+    while True:
+        if func != None:
+            func(*args, **kwargs)
+        time.sleep(secs)
+    return
+
+
+
 
 
 

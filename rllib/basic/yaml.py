@@ -3,7 +3,7 @@ from typing import ValuesView
 import yaml
 from os.path import join
 
-from .system import get_type_name
+from .system import get_class_name
 
 
 def parse_yaml_file(file_path):
@@ -12,11 +12,31 @@ def parse_yaml_file(file_path):
     return data
 
 def parse_yaml_file_unsafe(file_path):
-    # with open(file_path) as f:
-    #     data = yaml.load(f, Loader=yaml.FullLoader)
     data = parse_yaml_file(file_path)
     config = YamlConfig(**data)
     return config
+
+
+def recursive_print_dict(d, indent=0):
+    for k, v in d.items():
+        if isinstance(v, dict):
+            print("\t" * indent, f"{k}:")
+            recursive_print_dict(v, indent+1)
+        else:
+            print("\t" * indent, f"{k}:{v}")
+    return
+
+
+def recursive_str_dict(d, indent=0):
+    res = ""
+    for k, v in d.items():
+        if isinstance(v, dict):
+            res += "\t" * indent + f"{k}: " + '\n'
+            res += recursive_str_dict(v, indent+1)
+        else:
+            res += "\t" * indent + f"{k}: {v}" + '\n'
+    return res
+
 
 
 class YamlConfig(object):
@@ -27,7 +47,12 @@ class YamlConfig(object):
             else:
                 setattr(self, key, kwargs[key])
         return
-    
+
+
+    def __repr__(self):
+        return recursive_str_dict(self.to_dict(), 1)
+
+
     def __getattribute__(self, name):
         try:
             return object.__getattribute__(self, name)
@@ -44,7 +69,7 @@ class YamlConfig(object):
     def set(self, key, value):
         if hasattr(self, key):
             print('[{}.set] warning: cannot imagine why need this: set {} from {} to {}'.format(
-                get_type_name(self), key, str(getattr(self, key)), str(value)
+                get_class_name(self), key, str(getattr(self, key)), str(value)
             ))
             # raise NotImplementedError('warning: cannot imagine why need this.')
         setattr(self, key, value)
@@ -68,7 +93,7 @@ class YamlConfig(object):
 
         for attribute in dir(config):
             if attribute in block_words:
-                if not isinstance(config, YamlConfig): print('[{}.update] ignore attribute: '.format(get_type_name(self)), attribute)
+                if not isinstance(config, YamlConfig): print('[{}.update] ignore attribute: '.format(get_class_name(self)), attribute)
                 continue
             if not attribute.startswith('_'):
                 setattr(self, attribute, getattr(config, attribute))

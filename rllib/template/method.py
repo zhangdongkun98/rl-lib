@@ -2,11 +2,12 @@
 import torch
 import os
 from os.path import join
+from typing import List
 
 from ..basic import Data
 from ..basic import YamlConfig
 from ..basic import Writer
-
+from .model import Model
 
 class Method(object):
     def __init__(self, config: YamlConfig, writer: Writer):
@@ -23,6 +24,7 @@ class Method(object):
         self.dtype = torch.float32
         self.step_train = self.step_update = -1
 
+        self.models: List[Model] = []
         self.models_to_load, self.models_to_save = None, None
 
 
