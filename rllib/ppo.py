@@ -46,11 +46,11 @@ class PPO(MethodSingleAgent):
         self.optimizer = Adam(self.policy.parameters(), lr=self.lr, betas=self.betas)
         self.critic_loss = nn.MSELoss()
 
-        self._memory: RolloutBuffer = config.get('buffer', RolloutBuffer)(self.device, self.batch_size)
+        self.buffer: RolloutBuffer = config.get('buffer', RolloutBuffer)(self.device, self.batch_size)
 
 
     def update_parameters(self):
-        if len(self._memory) < self.buffer_size:
+        if len(self.buffer) < self.buffer_size:
             return
         self.update_parameters_start()
         print('[{}.update_parameters] update step: '.format(get_class_name(self)), self.step_update)
@@ -58,7 +58,7 @@ class PPO(MethodSingleAgent):
         for _ in range(self.K_epochs):
             self.step_train += 1
 
-            experience = self._memory.sample(self.gamma)
+            experience = self.buffer.sample(self.gamma)
             old_states = experience.state
             old_actions = experience.action
             old_logprobs = experience.prob
@@ -94,7 +94,7 @@ class PPO(MethodSingleAgent):
                 self._save_model()
 
         hard_update(self.policy_old, self.policy)
-        self._memory.clear()
+        self.buffer.clear()
         return
 
 
@@ -102,7 +102,7 @@ class PPO(MethodSingleAgent):
     def select_action(self, state):
         self.select_action_start()
         action, logprob, _ = self.policy_old(state.to(self.device))
-        self._memory.push_prob(logprob)
+        self.buffer.push_prob(logprob)
         return action
 
 

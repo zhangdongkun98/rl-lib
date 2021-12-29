@@ -52,16 +52,16 @@ class SAC(MethodSingleAgent):
         self.alpha = self.log_alpha.exp().detach()
         self.alpha_optimizer = Adam([self.log_alpha], lr=self.lr_tune)
 
-        self._memory: ReplayBuffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, self.device)
+        self.buffer: ReplayBuffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, self.device)
 
 
     def update_parameters(self):
-        if len(self._memory) < self.start_timesteps:
+        if len(self.buffer) < self.start_timesteps:
             return
         self.update_parameters_start()
 
         '''load data batch'''
-        experience = self._memory.sample()
+        experience = self.buffer.sample()
         state = experience.state
         action = experience.action
         next_state = experience.next_state

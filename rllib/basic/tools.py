@@ -8,6 +8,19 @@ import torch
 import torch.nn as nn
 
 
+
+def setup_seed(seed):
+    print('[{}] [setup_seed] seed is: '.format(__file__), seed)
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+
+
+
 '''
 https://stackoverflow.com/questions/15927755/opposite-of-numpy-unwrap
 '''
@@ -189,14 +202,13 @@ def calculate_quadrant(point):
 
 
 
-def setup_seed(seed):
-    print('[{}] [setup_seed] seed is: '.format(__file__), seed)
-    random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
 
-
+def split_integer(m, n):
+    assert n > 0
+    quotient = int(m / n)
+    remainder = m % n
+    if remainder > 0:
+        return [quotient] * (n - remainder) + [quotient + 1] * remainder
+    if remainder < 0:
+        return [quotient - 1] * -remainder + [quotient] * (n + remainder)
+    return [quotient] * n

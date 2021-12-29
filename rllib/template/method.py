@@ -19,7 +19,7 @@ class Method(object):
         self.path_pack = config.path_pack
         self.writer = writer
         self.output_dir = join(self.path_pack.output_path, 'method')
-        os.makedirs(self.output_dir)
+        os.makedirs(self.output_dir, exist_ok=True)
 
         self.dtype = torch.float32
         self.step_train = self.step_update = -1
@@ -60,4 +60,8 @@ class MethodSingleAgent(Method):
     def store(self, experience, **kwargs):
         self.buffer.push(experience, **kwargs)
 
+    def close(self):
+        if hasattr(self.buffer, 'close'):
+            self.buffer.close()
+        return
 

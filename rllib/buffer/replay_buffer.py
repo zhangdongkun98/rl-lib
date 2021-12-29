@@ -1,5 +1,6 @@
 
 import numpy as np
+from typing import List
 
 import torch
 
@@ -19,12 +20,7 @@ class ReplayBuffer(object):
         self.size += 1
 
     def sample(self):
-        indices = np.random.randint(0, len(self), size=self.batch_size)
-
-        unique, counts = np.unique(indices, return_counts=True)
-        self.num_visits[unique] += counts
-
-        batch = self.memory[indices]
+        batch: List[Experience] = self.get_batch(self.batch_size)
         experiences: Experience = self._batch_stack(batch)
         return experiences.to(self.device)
     
@@ -34,6 +30,15 @@ class ReplayBuffer(object):
     def full(self):
         return self.size >= self.capacity
 
+
+    def get_batch(self, batch_size):
+        indices = np.random.randint(0, len(self), size=batch_size)
+
+        unique, counts = np.unique(indices, return_counts=True)
+        self.num_visits[unique] += counts
+
+        batch = self.memory[indices]
+        return batch
 
     def _batch_stack(self, batch):
         """
@@ -49,4 +54,7 @@ class ReplayBuffer(object):
         result.done.unsqueeze_(1)
         return result
 
+
+    def close(self):
+        return
 
