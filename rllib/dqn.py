@@ -40,7 +40,7 @@ class DQN(MethodSingleAgent):
         self.optimizer = Adam(self.policy.parameters(), lr=self.lr)
         self.loss = nn.MSELoss()
 
-        self.buffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, config.device)
+        self.buffer = config.get('buffer', ReplayBuffer)(config, self.buffer_size, self.batch_size, config.device)
 
 
     def update_parameters(self):

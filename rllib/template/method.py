@@ -45,6 +45,13 @@ class Method(object):
         return Data(**local)
 
 
+    def get_writer(self):
+        return self.writer
+    def reset_writer(self):
+        print('reset writer')
+        self.writer = Writer(log_dir=self.config.path_pack.log_path, comment=self.config.dataset_name, max_queue=100)
+
+
 class MethodSingleAgent(Method):
     def __init__(self, config: YamlConfig, writer: Writer):
         super(MethodSingleAgent, self).__init__(config, writer)
@@ -61,6 +68,7 @@ class MethodSingleAgent(Method):
         self.buffer.push(experience, **kwargs)
 
     def close(self):
+        self.writer.close()
         if hasattr(self.buffer, 'close'):
             self.buffer.close()
         return

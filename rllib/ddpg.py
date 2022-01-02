@@ -42,7 +42,7 @@ class DDPG(MethodSingleAgent):
         self.actor_optimizer = Adam(self.actor.parameters(), lr=self.lr_actor)
         self.critic_loss = nn.MSELoss()
 
-        self.buffer: ReplayBuffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, config.device)
+        self.buffer: ReplayBuffer = config.get('buffer', ReplayBuffer)(config, self.buffer_size, self.batch_size, config.device)
 
 
     def update_parameters(self):

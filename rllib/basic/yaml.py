@@ -60,7 +60,7 @@ class YamlConfig(object):
             e = 'yaml file has not attribute \'{}\''.format(name)
             raise AttributeError(e)
     
-    def get(self, key, default):
+    def get(self, key, default=None):
         result = default
         if hasattr(self, key):
             result = getattr(self, key)

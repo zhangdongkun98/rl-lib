@@ -65,6 +65,12 @@ class Writer(SummaryWriter):
         return res
 
 
+class PseudoWriter(object):
+    def __init__(self, log_dir, comment, max_queue):
+        self.log_dir = log_dir
+        self.comment = comment
+        self.max_queue = max_queue
+
 
 
 

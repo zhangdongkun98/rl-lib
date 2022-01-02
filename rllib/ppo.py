@@ -147,6 +147,7 @@ class ActorCriticContinuous(Model):
     """
 
     max_action = 2.0
+    max_action = 1.0
 
     logstd_min = -2.5
     logstd_max = 1

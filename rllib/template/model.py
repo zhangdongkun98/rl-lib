@@ -43,9 +43,6 @@ class Model(nn.Module):
         model_path = join(path, model_name)
         torch.save(self.state_dict(), model_path)
 
-    # def __reduce_ex__(self, proto):  ## ! todo
-    #     return str(self)
-
 
 
 
@@ -57,7 +54,7 @@ class Model(nn.Module):
 class FeatureExtractor(object):
     def __init__(self, config, model_id):
         self.dim_feature = config.dim_state
-    def __call__(self, x):
+    def __call__(self, x, **kwargs):
         return x
 
 

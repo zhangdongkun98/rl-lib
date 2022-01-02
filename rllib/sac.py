@@ -52,7 +52,7 @@ class SAC(MethodSingleAgent):
         self.alpha = self.log_alpha.exp().detach()
         self.alpha_optimizer = Adam([self.log_alpha], lr=self.lr_tune)
 
-        self.buffer: ReplayBuffer = config.get('buffer', ReplayBuffer)(self.buffer_size, self.batch_size, self.device)
+        self.buffer: ReplayBuffer = config.get('buffer', ReplayBuffer)(config, self.buffer_size, self.batch_size, self.device)
 
 
     def update_parameters(self):
