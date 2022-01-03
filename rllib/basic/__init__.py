@@ -1,6 +1,6 @@
 from .data import Data
 
-from .system import set_trace, prefix, get_class_name, spin, silent
+from .system import set_trace, get_class_name, prefix, spin, silent
 
 from .tools import setup_seed
 from .tools import *
