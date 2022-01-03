@@ -48,7 +48,6 @@ class Method(object):
     def get_writer(self):
         return self.writer
     def reset_writer(self):
-        print('reset writer')
         self.writer = Writer(log_dir=self.config.path_pack.log_path, comment=self.config.dataset_name, max_queue=100)
 
 

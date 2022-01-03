@@ -8,6 +8,7 @@ from tensorboardX import SummaryWriter
 
 import torch
 
+from .system import prefix
 from .yaml import YamlConfig
 
 
@@ -86,7 +87,7 @@ def create_dir(config: YamlConfig, model_name, mode='train', writer_cls=Writer):
     dataset_name = model_name + '/' + time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime(time.time())) + '----' + str(config.description)
     if mode != 'train':
         dataset_name += '-' + mode
-    print('[{}.create_dir] dir name: '.format(__name__), dataset_name)
+    print(prefix(__name__) + 'dir name: ', dataset_name)
     work_path = os.getcwd()
     log_path = join(work_path, 'results', dataset_name, 'log')
     save_model_path = join(work_path, 'results', dataset_name, 'saved_models')

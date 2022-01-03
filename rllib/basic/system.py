@@ -37,7 +37,17 @@ def spin(secs=5.0, func=None, args=(), kwargs={}):
     return
 
 
+def prefix(x):
+    res = ''
+    if isinstance(x, str):
+        res += x
+    else:
+        res += get_class_name(x)
 
+    import inspect
+    f_name = inspect.getframeinfo(inspect.currentframe().f_back)[2]
+    res += '::' + f_name
+    return '[' + res + '] '
 
 
 
