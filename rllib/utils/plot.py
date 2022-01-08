@@ -80,6 +80,8 @@ plt.ylabel('Reward')
 
 for idx, file_path in enumerate(file_paths):
     aa = np.loadtxt(file_path)
+    if len(aa.shape) == 1:
+        aa = np.expand_dims(aa, axis=1)
     print(aa.shape)
 
     sns.set(palette='muted', color_codes=True)
@@ -88,7 +90,9 @@ for idx, file_path in enumerate(file_paths):
     # # seaborn.distplot(aa[:,1], kde=False, color="b")
     # sns.lineplot(x=aa[:,0], y=aa[:,1], data=aa)
 
-    plot_reward(aa[:,1], idx % len(colors), file_path)
+    # import pdb; pdb.set_trace()
+
+    plot_reward(aa[:,-1], idx % len(colors), file_path)
 
 
 plt.show()

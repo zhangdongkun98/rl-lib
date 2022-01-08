@@ -7,6 +7,7 @@ from .tools import *
 from .tools import numpy_gather
 from .tools import pad_tensor, pad_array
 from .tools import flatten_list, calculate_quadrant
+from .tools import fig2array
 
 from .image import image_transforms, image_transforms_reverse
 

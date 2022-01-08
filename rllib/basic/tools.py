@@ -150,8 +150,31 @@ def pad_array(data: np.ndarray, pad_size: tuple, pad_value=np.inf):
 
 
 import matplotlib.pyplot as plt
-def plotArrow2D(x, y, theta, length=1.0, width=0.5, fc='r', ec='k'):  # pragma: no cover
+def plot_arrow(x, y, theta, length=1.0, width=0.5, fc='r', ec='k'):  # pragma: no cover
     plt.arrow(x, y, length * np.cos(theta), length * np.sin(theta), fc=fc, ec=ec, head_width=width, head_length=width)
+
+
+
+
+def fig2array(fig):
+    """
+        fig = plt.figure()
+        image = fig2array(fig)
+    """
+    import PIL.Image as Image
+    # draw the renderer
+    fig.canvas.draw()
+ 
+    # Get the RGBA buffer from the figure
+    w, h = fig.canvas.get_width_height()
+    buf = np.fromstring(fig.canvas.tostring_argb(), dtype=np.uint8)
+    buf.shape = (w, h, 4)
+ 
+    # canvas.tostring_argb give pixmap in ARGB mode. Roll the ALPHA channel to have it in RGBA mode
+    buf = np.roll(buf, 3, axis=2)
+    image = Image.frombytes("RGBA", (w, h), buf.tostring())
+    image = np.asarray(image)[:,:,:3]
+    return image
 
 
 
