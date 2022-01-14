@@ -7,6 +7,7 @@ from typing import List
 from ..basic import Data
 from ..basic import YamlConfig
 from ..basic import Writer
+from ..basic import prefix
 from .model import Model
 
 class Method(object):
@@ -43,6 +44,15 @@ class Method(object):
         local.pop('self')
         # local.pop('__class__')
         return Data(**local)
+
+    def update_parameters_(self, n_iters=1000):
+        print(prefix(self) + 'total iters: ', n_iters)
+        for i in range(n_iters):
+            if i % (n_iters //10) == 0:
+                print(prefix(self) + 'update_parameters i: ', i)
+            self.update_parameters()
+        print()
+        return
 
 
     def get_writer(self):
