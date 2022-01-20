@@ -54,6 +54,9 @@ class Method(object):
         print()
         return
 
+    def update_parameters(self):
+        return
+
 
     def get_writer(self):
         return self.writer

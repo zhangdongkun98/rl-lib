@@ -43,9 +43,6 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
     def store(self, experience):
         return
 
-    def update_parameters(self):
-        return
-
 
     @torch.no_grad()
     def select_action_ppo(self, state):

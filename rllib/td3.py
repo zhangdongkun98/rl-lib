@@ -29,7 +29,6 @@ class TD3(MethodSingleAgent):
     noise_clip = 0.5
 
     start_timesteps = 30000
-    delay_actor = 0
 
     save_model_interval = 200
 
@@ -81,7 +80,7 @@ class TD3(MethodSingleAgent):
         self.writer.add_scalar('method/loss_critic', critic_loss.detach().item(), self.step_update)
 
         '''actor'''
-        if self.step_update > self.delay_actor and self.step_update % self.policy_freq == 0:
+        if self.step_update % self.policy_freq == 0:
             actor_loss = -self.critic.q1(state, self.actor(state)).mean()
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
