@@ -42,7 +42,7 @@ class Data(object):
     _func_names = ['repeat'] + _func_numpy + _func_torch
 
     _attr_numpy = []
-    _attr_torch = ['device', 'requires_grad']
+    _attr_torch = ['device', 'requires_grad', 'dtype']
     _attr_names = ['shape'] + _attr_numpy + _attr_torch
 
     def __init__(self, **kwargs):
