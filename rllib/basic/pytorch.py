@@ -4,14 +4,15 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim import Adam
+from torch.autograd import grad
 
 
-def gradient(y, x, grad_outputs=None):
+def gradient(y, x, grad_outputs=None, allow_unused=False):
     """Compute dy/dx @ grad_outputs"""
     if grad_outputs == None:
         grad_outputs = torch.ones_like(y).to(y.device)
-    grad = torch.autograd.grad(y, [x], grad_outputs=grad_outputs, create_graph=True)[0]
-    return grad
+    _grad = grad(y, [x], grad_outputs=grad_outputs, create_graph=True, allow_unused=allow_unused)[0]
+    return _grad
 
 
 def jacobian(y, x):
