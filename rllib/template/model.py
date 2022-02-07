@@ -19,21 +19,27 @@ class Model(nn.Module):
         self.dim_state = config.get('dim_state', None)
         self.dim_action = config.get('dim_action', None)
 
-    def load_model(self, model_id=None):
-        model_dir = os.path.expanduser(self.model_dir)
+    def load_model(self, model_num=None, model_dir=None):
+        if model_dir == None:
+            model_dir = self.model_dir
+        if model_num == None:
+            model_num = self.model_num
+
+        model_dir = os.path.expanduser(model_dir)
         models_name = '_'.join([self.method_name.upper(), self.__class__.__name__, '*.pth'])
         file_paths = glob.glob(join(model_dir, models_name))
         file_names = [os.path.split(i)[-1] for i in file_paths]
         nums = [int(i.split('_')[-2]) for i in file_names]
-        model_num = max(nums) if self.model_num == -1 else self.model_num
+        if model_num == -1:
+            model_num = max(nums)
 
+        print()
         print('[rllib.template.Model.load_model] model_dir: ', model_dir)
         print('[rllib.template.Model.load_model] models_name: ', models_name)
         print('[rllib.template.Model.load_model] file_paths length: ', len(file_paths))
 
         assert model_num in nums
-        if model_id == None: model_id = self.model_id
-        model_name = '_'.join([self.method_name.upper(), self.__class__.__name__, str(model_id), str(model_num), '.pth'])
+        model_name = '_'.join([self.method_name.upper(), self.__class__.__name__, str(self.model_id), str(model_num), '.pth'])
         model_path = join(model_dir, model_name)
         print('[rllib.template.Model.load_model] load model: ', model_path)
         self.load_state_dict(torch.load(model_path))
