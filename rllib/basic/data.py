@@ -175,3 +175,18 @@ class Data(object):
             raise NotImplementedError
         return value
 
+
+    def memory_usage(self):
+        import sys
+        from pympler import asizeof
+        size = 0
+        for value in self:
+            if isinstance(value, Data):
+                size += value.memory_usage()
+            elif isinstance(value, torch.Tensor):
+                size += sys.getsizeof(value.storage())
+            else:
+                # size += sys.getsizeof(value)
+                size += asizeof.asizeof(value)
+        return size
+

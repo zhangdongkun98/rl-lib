@@ -51,6 +51,25 @@ def prefix(x):
 
 
 
+def get_gpu_memory_usage(pid=None):
+    """
+    Ref: https://github.com/gpuopenanalytics/pynvml/issues/21
+    """
+    if pid == None:
+        import os
+        pid = os.getpid()
+    import pynvml
+    pynvml.nvmlInit()
+    btypes = 0
+    for dev_id in range(pynvml.nvmlDeviceGetCount()):
+        handle = pynvml.nvmlDeviceGetHandleByIndex(dev_id)
+        for proc in pynvml.nvmlDeviceGetComputeRunningProcesses(handle):
+            if proc.pid == pid:
+                btypes += proc.usedGpuMemory
+    return btypes
+
+
+
 
 ##############################################
 ############ silent ##########################
