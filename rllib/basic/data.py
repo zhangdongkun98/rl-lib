@@ -178,7 +178,7 @@ class Data(object):
 
     def memory_usage(self):
         import sys
-        from pympler import asizeof
+        from pympler import asizeof  ### pip install pympler==1.0.1
         size = 0
         for value in self:
             if isinstance(value, Data):
