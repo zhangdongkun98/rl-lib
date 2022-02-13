@@ -17,3 +17,6 @@ tensorboard==2.2.2
 
 psutil==5.8.0
 pynvml==8.0.4
+
+memory-profiler==0.60.0
+

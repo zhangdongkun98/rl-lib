@@ -53,7 +53,7 @@ class Writer(SummaryWriter):
         self.data_cache[tag]['count'] += 1
         self.data_cache[tag]['data'] += str(global_step) + ' ' + str(scalar_value) + '\n'
         
-        if self.data_cache[tag]['count'] % 300 == 0:
+        if self.data_cache[tag]['count'] % 200 == 0:
             self._write_cache_to_disk(tag)
         return res
 

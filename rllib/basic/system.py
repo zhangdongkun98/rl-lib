@@ -51,6 +51,15 @@ def prefix(x):
 
 
 
+def get_cpu_memory_usage(pid=None):
+    if pid == None:
+        import os
+        pid = os.getpid()
+    import psutil
+    btypes = psutil.Process(os.getpid()).memory_info().rss
+    return btypes
+
+
 def get_gpu_memory_usage(pid=None):
     """
     Ref: https://github.com/gpuopenanalytics/pynvml/issues/21
@@ -67,6 +76,11 @@ def get_gpu_memory_usage(pid=None):
             if proc.pid == pid:
                 btypes += proc.usedGpuMemory
     return btypes
+
+
+
+import memory_profiler
+cpu_memory_profile = memory_profiler.profile
 
 
 

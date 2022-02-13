@@ -103,6 +103,10 @@ def prob2onehot(prob, length):
 
 
 def numpy_gather(ndarray, dim, index):
+    """
+        Deprecated because of the risk of memory leak.
+        Use numpy.take_along_axis instead.
+    """
     tensor = torch.from_numpy(ndarray)
     index_index = torch.from_numpy(index)
     res = torch.gather(tensor, dim=dim, index=index_index)

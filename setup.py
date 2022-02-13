@@ -14,6 +14,7 @@ setup(
         'tensorboardX',
         'PyYAML',
         'psutil', 'pynvml',
+        'memory-profiler',
     ],
 
     include_package_data=True
