@@ -53,7 +53,7 @@ class Writer(SummaryWriter):
         self.data_cache[tag]['count'] += 1
         self.data_cache[tag]['data'] += str(global_step) + ' ' + str(scalar_value) + '\n'
         
-        if self.data_cache[tag]['count'] % 200 == 0:
+        if self.data_cache[tag]['count'] % 100 == 0:
             self._write_cache_to_disk(tag)
         return res
 
@@ -87,7 +87,7 @@ def create_dir(config: YamlConfig, model_name, mode='train', writer_cls=Writer):
     dataset_name = model_name + '/' + time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime(time.time())) + '----' + str(config.description)
     if mode != 'train':
         dataset_name += '-' + mode
-    print(prefix(__name__) + 'dir name: ', dataset_name)
+    print(prefix(__name__) + 'dir name: ', 'results/'+ dataset_name)
     work_path = os.getcwd()
     log_path = join(work_path, 'results', dataset_name, 'log')
     save_model_path = join(work_path, 'results', dataset_name, 'saved_models')
