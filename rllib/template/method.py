@@ -33,7 +33,6 @@ class Method(object):
         # print("[update_parameters] save model")
         [model.save_model(self.path_pack.save_model_path, self.step_update) for model in self.models_to_save]
     def _load_model(self):
-        print('[update_parameters] load model')
         [model.load_model() for model in self.models_to_load]
         return
 
