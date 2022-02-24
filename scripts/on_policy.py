@@ -41,8 +41,8 @@ def run_one_episode(i_episode, config, writer, env, method):
     # while True:
     for i in range(config.epoch_length):
         action = method.select_action( torch.from_numpy(state).unsqueeze(0).float() )
-        # next_state, reward, done, _ = env.step(action.cpu().numpy().flatten())
-        next_state, reward, done, _ = env.step(action.cpu().numpy().squeeze())
+        # next_state, reward, done, _ = env.step(action.cpu().numpy().squeeze())
+        next_state, reward, done, _ = env.step(action.action.cpu().numpy().squeeze())
 
         if i == config.epoch_length -1:
             done = True

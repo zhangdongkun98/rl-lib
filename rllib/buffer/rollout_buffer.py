@@ -1,6 +1,5 @@
 
 import numpy as np
-from abc import ABC, abstractmethod
 from typing import List
 
 import torch
@@ -10,58 +9,53 @@ from .tools import stack_data
 
 
 class RolloutBuffer(object):
-    def __init__(self, device, batch_size=-1):
+    def __init__(self, config, device, batch_size=-1):
         self.batch_size, self.device = batch_size, device
-        self._states, self._actions = [], []
-        self._rewards, self._dones = [], []
-        self._probs = []
-
-        self._memory: List[Experience] = []
-        self._prob_cache = None
+        self.memory: List[Experience] = []
         self.rollout_reward = False
 
     def push(self, experience: Experience):
-        experience.update(prob=self._prob_cache)
-        self._memory.append(experience)
-
-    def push_prob(self, prob):
-        self._prob_cache = prob
+        self.memory.append(experience)
 
 
     def sample(self, gamma):
+        self.reward2return(gamma)
+        batch_size = len(self) if self.batch_size <= 0 else self.batch_size
+        batch = self.get_batch(batch_size)
+        experiences: Experience = self._batch_stack(batch)
+        return experiences.to(self.device)
+
+    def __len__(self):
+        return len(self.memory)
+
+    def clear(self):
+        del self.memory
+        self.memory = []
+        self.rollout_reward = False
+
+
+    def reward2return(self, gamma):
         if not self.rollout_reward:
             self.rollout_reward = True
 
             rewards = []
             discounted_reward = 0
-            for e in reversed(self._memory):
+            for e in reversed(self.memory):
                 if e.done:
                     discounted_reward = 0
                 discounted_reward = e.reward + gamma * discounted_reward
                 rewards.insert(0, discounted_reward)
             
-            for e, reward in zip(self._memory, rewards):
+            for e, reward in zip(self.memory, rewards):
                 e.update(reward=reward)
             
-            self._memory = np.array(self._memory, dtype=Experience)
+            self.memory = np.array(self.memory, dtype=Experience)
+        return
 
-        batch_size = len(self) if self.batch_size <= 0 else self.batch_size
+    def get_batch(self, batch_size):
         indices = np.random.choice(len(self), batch_size, replace=False)
-        batch = self._memory[indices]
-
-        experiences: Experience = self._batch_stack(batch)
-        return experiences.to(self.device)
-
-
-    def __len__(self):
-        return len(self._memory)
-
-    def clear(self):
-        del self._memory
-        self._memory = []
-        self._prob_cache = None
-        self.rollout_reward = False
-
+        batch = self.memory[indices]
+        return batch
 
     def _batch_stack(self, batch):
         """

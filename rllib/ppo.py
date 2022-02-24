@@ -7,7 +7,7 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.distributions import Categorical, MultivariateNormal
 
-from .basic import get_class_name
+from .basic import prefix, Data
 from .buffer import RolloutBuffer
 from .utils import init_weights, hard_update
 from .template import MethodSingleAgent, Model
@@ -46,22 +46,22 @@ class PPO(MethodSingleAgent):
         self.optimizer = Adam(self.policy.parameters(), lr=self.lr, betas=self.betas)
         self.critic_loss = nn.MSELoss()
 
-        self.buffer: RolloutBuffer = config.get('buffer', RolloutBuffer)(self.device, self.batch_size)
+        self.buffer: RolloutBuffer = config.get('buffer', RolloutBuffer)(config, self.device, self.batch_size)
 
 
     def update_parameters(self):
         if len(self.buffer) < self.buffer_size:
             return
         self.update_parameters_start()
-        print('[{}.update_parameters] update step: '.format(get_class_name(self)), self.step_update)
+        print(prefix(self) + 'update step: ', self.step_update)
 
         for _ in range(self.K_epochs):
             self.step_train += 1
 
             experience = self.buffer.sample(self.gamma)
             old_states = experience.state
-            old_actions = experience.action
-            old_logprobs = experience.prob
+            old_actions = experience.action.action
+            old_logprobs = experience.action.action_logprob
             rewards = experience.reward
             rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
 
@@ -101,9 +101,9 @@ class PPO(MethodSingleAgent):
     @torch.no_grad()
     def select_action(self, state):
         self.select_action_start()
-        action, logprob, _ = self.policy_old(state.to(self.device))
-        self.buffer.push_prob(logprob)
-        return action
+        action, action_logprob, _ = self.policy_old(state.to(self.device))
+        return Data(action=action, action_logprob=action_logprob).cpu()
+
 
 
 
@@ -186,6 +186,8 @@ class ActorCriticContinuous(Model):
         logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
         logstd *= 0.5
         value = self.critic(x)
+
+        print('state: ', state.shape, action.shape, state.device)
 
         cov = torch.diag_embed( torch.exp(logstd) )
         dist = MultivariateNormal(mean, cov)
