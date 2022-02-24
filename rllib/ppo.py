@@ -187,8 +187,6 @@ class ActorCriticContinuous(Model):
         logstd *= 0.5
         value = self.critic(x)
 
-        print('state: ', state.shape, action.shape, state.device)
-
         cov = torch.diag_embed( torch.exp(logstd) )
         dist = MultivariateNormal(mean, cov)
         logprob = dist.log_prob(action).unsqueeze(1)
