@@ -29,9 +29,10 @@ class Method(object):
         self.models_to_load, self.models_to_save = None, None
 
 
-    def _save_model(self):
-        # print("[update_parameters] save model")
-        [model.save_model(self.path_pack.save_model_path, self.step_update) for model in self.models_to_save]
+    def _save_model(self, iter_num=None):
+        if iter_num == None:
+            iter_num = self.step_update
+        [model.save_model(self.path_pack.save_model_path, iter_num) for model in self.models_to_save]
     def _load_model(self):
         [model.load_model() for model in self.models_to_load]
         return
