@@ -91,7 +91,7 @@ class PPO(MethodSingleAgent):
             self.update_callback(locals())
 
             if self.step_train % self.save_model_interval == 0:
-                self._save_model()
+                self._save_model(self.step_train)
 
         hard_update(self.policy_old, self.policy)
         self.buffer.clear()
