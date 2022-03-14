@@ -96,7 +96,7 @@ class Data(object):
 
     def keys(self):
         return list(self.__dict__.keys())
-    def values(self):
+    def dvalues(self):
         return list(self.__dict__.values())
 
 
