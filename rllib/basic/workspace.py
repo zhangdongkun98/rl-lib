@@ -46,6 +46,8 @@ class Writer(SummaryWriter):
         res = super().add_scalar(*args)
 
         tag, scalar_value, global_step = args[0], args[1], args[2]
+        if isinstance(scalar_value, torch.Tensor):
+            scalar_value = scalar_value.item()
 
         if tag not in self.data_cache:
             self.data_cache[tag] = dict()
