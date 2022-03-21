@@ -25,8 +25,6 @@ class Method(object):
         self.dtype = torch.float32
         self.step_train = self.step_update = -1
 
-        self.step_epoch = -1
-
         self.models: List[Model] = []
         self.models_to_load, self.models_to_save = None, None
 
