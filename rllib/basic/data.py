@@ -126,7 +126,7 @@ class Data(object):
         return type(self)(**new_dict)
 
 
-    def stack(self, *args, **kwargs):  ## ! TODO, change as cat
+    def stack(self, *args, **kwargs):
         """
             for torch.Tensor
         """
@@ -135,8 +135,10 @@ class Data(object):
         for (key, value) in self.__dict__.items():
             if isinstance(value, Data):
                 new_dict[key] = value.stack(*args, **kwargs)
-            else:
+            elif all([isinstance(v, torch.Tensor) for v in value]):
                 new_dict[key] = torch.stack(value, *args, **kwargs)
+            else:
+                new_dict[key] = torch.as_tensor(value)
         return type(self)(**new_dict)
 
     def cat(self, *args, **kwargs):
