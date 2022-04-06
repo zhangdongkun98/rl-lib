@@ -1,4 +1,4 @@
-from .data import Data
+from .data import BaseData, Data
 
 from .system import set_trace, get_class_name, prefix, spin, silent
 

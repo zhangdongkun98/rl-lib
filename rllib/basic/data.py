@@ -38,14 +38,9 @@ def attr(self, rllib_data_attr_name):
     return type(self)(**new_dict)
 
 
-class Data(object):
-    _func_numpy = []
-    _func_torch = ['squeeze', 'unsqueeze', 'cpu', 'numpy', 'detach', 'requires_grad_', 'clone', 'max']
-    _func_names = ['repeat'] + _func_numpy + _func_torch
 
-    _attr_numpy = []
-    _attr_torch = ['device', 'requires_grad', 'dtype', 'values']
-    _attr_names = ['shape'] + _attr_numpy + _attr_torch
+
+class BaseData(object):
 
     def __init__(self, **kwargs):
         self.update(**kwargs)
@@ -102,6 +97,17 @@ class Data(object):
 
     def pop(self, key):
         return self.__dict__.pop(key)
+
+
+
+class Data(BaseData):
+    _func_numpy = []
+    _func_torch = ['squeeze', 'unsqueeze', 'cpu', 'numpy', 'detach', 'requires_grad_', 'clone', 'max']
+    _func_names = ['repeat'] + _func_numpy + _func_torch
+
+    _attr_numpy = []
+    _attr_torch = ['device', 'requires_grad', 'dtype', 'values']
+    _attr_names = ['shape'] + _attr_numpy + _attr_torch
 
 
     # =============================================================================
