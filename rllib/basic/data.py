@@ -102,7 +102,7 @@ class BaseData(object):
 
 class Data(BaseData):
     _func_numpy = []
-    _func_torch = ['squeeze', 'unsqueeze', 'cpu', 'numpy', 'detach', 'requires_grad_', 'clone', 'max']
+    _func_torch = ['squeeze', 'unsqueeze', 'cpu', 'numpy', 'detach', 'requires_grad_', 'clone', 'max', 'expand', 'reshape']
     _func_names = ['repeat'] + _func_numpy + _func_torch
 
     _attr_numpy = []
