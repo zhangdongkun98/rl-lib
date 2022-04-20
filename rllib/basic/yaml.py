@@ -67,11 +67,11 @@ class YamlConfig(object):
         return result
     
     def set(self, key, value):
-        if hasattr(self, key):
-            print('[{}.set] warning: cannot imagine why need this: set {} from {} to {}'.format(
-                get_class_name(self), key, str(getattr(self, key)), str(value)
-            ))
-            # raise NotImplementedError('warning: cannot imagine why need this.')
+        # if hasattr(self, key):
+        #     print('[{}.set] warning: cannot imagine why need this: set {} from {} to {}'.format(
+        #         get_class_name(self), key, str(getattr(self, key)), str(value)
+        #     ))
+        #     # raise NotImplementedError('warning: cannot imagine why need this.')
         setattr(self, key, value)
     
     def delete(self, key):
