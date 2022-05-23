@@ -59,6 +59,7 @@ class SAC(MethodSingleAgent):
         if len(self.buffer) < self.start_timesteps:
             return
         self.update_parameters_start()
+        self.writer.add_scalar('method/buffer_size', len(self.buffer), self.step_update)
 
         '''load data batch'''
         experience = self.buffer.sample()
