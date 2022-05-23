@@ -90,7 +90,7 @@ class SAC(MethodSingleAgent):
         self.actor_optimizer.step()
 
         '''automatic entropy tuning'''
-        alpha_loss = self.log_alpha * (-logprob.mean() - self.target_entropy).detach()
+        alpha_loss = self.log_alpha.exp() * (-logprob.mean() - self.target_entropy).detach()
         self.alpha_optimizer.zero_grad()
         alpha_loss.backward()
         self.alpha_optimizer.step()
