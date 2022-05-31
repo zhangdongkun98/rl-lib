@@ -27,6 +27,26 @@ def get_method_name():
     return f_name
 
 
+def get_parent_class(x):
+    return x.__base__
+
+
+def get_class_parameters(x):
+    """
+        recursively
+    """
+
+    params = {}
+    if get_parent_class(x) != None:
+        parent_params = get_class_parameters(get_parent_class(x))
+        params.update(parent_params)
+    params.update(
+        {key: value for key, value in x.__dict__.items() if not callable(value) and not hasattr(value, '__get__')}
+    )
+    return params
+
+
+
 
 def spin(secs=5.0, func=None, args=(), kwargs={}):
     import time
