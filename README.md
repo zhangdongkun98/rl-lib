@@ -3,27 +3,33 @@
 Goal: follow the structure of [openai-spinningup-key-papers](https://spinningup.openai.com/en/latest/spinningup/keypapers.html).
 
 
+## Clone this repo
+```bash
+git clone https://github.com/zhangdongkun98/rl-lib.git
+cd rl-lib
+```
+
+
 ## Requirements
 
 ### 0. some packages
-
 ```bash
-pip install numpy==1.20.0
+pip install -r requirements.txt
 ```
 
 ### 1. torch
 ```bash
-pip install torch==1.7.1
+pip install torch==1.9.1
+pip install torchvision==0.10.1
 ```
 
-### 2. gym
+### 2. gym envs (optional)
 ```bash
-pip install gym
 pip install box2d-py
 pip install atari-py
 ```
 
-### 3. MuJoCo and mujoco-py
+### 3. MuJoCo and mujoco-py (optional)
 
 [MuJoCo download](https://mujoco.org/download) <br>
 [mujoco-py repo](https://github.com/openai/mujoco-py) <br>
@@ -56,8 +62,6 @@ wget https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz
 ## Installation
 
 ```bash
-git clone https://github.com/zhangdongkun98/rl-lib.git
-cd rl-lib
 pip install -e .
 ```
 
