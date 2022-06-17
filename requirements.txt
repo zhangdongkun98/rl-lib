@@ -10,8 +10,6 @@ tqdm==4.57.0
 
 gym==0.15.7
 
-torch==1.7.1
-torchvision==0.8.2
 tensorboardX==2.1
 tensorboard==2.2.2
 
