@@ -7,10 +7,10 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.distributions import Normal, MultivariateNormal
 
-from .buffer import ReplayBuffer
-from .utils import init_weights, soft_update
-from .template import MethodSingleAgent, Model
-from .template.model import FeatureExtractor, FeatureMapper
+from rllib.buffer import ReplayBuffer
+from rllib.utils import init_weights, soft_update
+from rllib.template import MethodSingleAgent, Model
+from rllib.template.model import FeatureExtractor, FeatureMapper
 
 
 class SAC(MethodSingleAgent):
@@ -34,7 +34,7 @@ class SAC(MethodSingleAgent):
     save_model_interval = 1000
 
     def __init__(self, config, writer):
-        super(SAC, self).__init__(config, writer)
+        super().__init__(config, writer)
 
         self.critic: Critic = config.get('net_critic', Critic)(config).to(self.device)
         self.actor: Actor = config.get('net_actor', Actor)(config).to(self.device)
@@ -133,7 +133,7 @@ class Actor(Model):
     logstd_max = 1
 
     def __init__(self, config):
-        super(Actor, self).__init__(config, model_id=0)
+        super().__init__(config, model_id=0)
 
         self.fe = config.get('net_actor_fe', FeatureExtractor)(config, 0)
         self.mean = config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
@@ -191,7 +191,7 @@ class Actor(Model):
 
 class Critic(Model):
     def __init__(self, config):
-        super(Critic, self).__init__(config, model_id=0)
+        super().__init__(config, model_id=0)
 
         self.fe = config.get('net_critic_fe', FeatureExtractor)(config, 0)
         self.fm1 = config.get('net_critic_fm', FeatureMapper)(config, 0, self.fe.dim_feature+config.dim_action, 1)

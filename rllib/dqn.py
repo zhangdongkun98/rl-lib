@@ -7,10 +7,10 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 
-from .buffer import ReplayBuffer
-from .utils import init_weights, soft_update
-from .template import MethodSingleAgent, Model
-from .template.model import FeatureExtractor, FeatureMapper
+from rllib.buffer import ReplayBuffer
+from rllib.utils import init_weights, soft_update
+from rllib.template import MethodSingleAgent, Model
+from rllib.template.model import FeatureExtractor, FeatureMapper
 
 
 class DQN(MethodSingleAgent):
@@ -31,7 +31,7 @@ class DQN(MethodSingleAgent):
     save_model_interval = 200
 
     def __init__(self, config, writer):
-        super(DQN, self).__init__(config, writer)
+        super().__init__(config, writer)
 
         self.policy = config.get('net_ac', ActorCritic)(config).to(self.device)
         self.policy_target = copy.deepcopy(self.policy)
@@ -95,7 +95,7 @@ class DQN(MethodSingleAgent):
 
 class ActorCritic(Model):
     def __init__(self, config):
-        super(ActorCritic, self).__init__(config, model_id=0)
+        super().__init__(config, model_id=0)
 
         self.fe = config.get('net_ac_fe', FeatureExtractor)(config, 0)
         self.fm = config.get('net_ac_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
