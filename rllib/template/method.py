@@ -36,6 +36,8 @@ class Method(object):
     def _load_model(self):
         [model.load_model() for model in self.models_to_load]
         return
+    def load_model(self):
+        return self._load_model()
 
     def update_parameters_start(self):
         self.step_update += 1

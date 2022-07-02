@@ -7,7 +7,7 @@ import torch
 
 class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
     def __init__(self, config, writer):
-        super(EvaluateSingleAgent, self).__init__(config, writer)
+        super().__init__(config, writer)
 
         self.config = config
 
@@ -34,6 +34,23 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
             self.actor = config.get('net_actor', td3.Actor)(config).to(self.device)
             self.models_to_load = [self.critic, self.actor]
             self.select_action = self.select_action_td3
+        elif method_name == 'SAC':
+            from . import sac
+            self.critic = config.get('net_critic', sac.Critic)(config).to(self.device)
+            self.actor = config.get('net_actor', sac.Actor)(config).to(self.device)
+            self.models_to_load = [self.critic, self.actor]
+            self.select_action = self.select_action_sac
+        
+        elif method_name == 'DIAYN':
+            from . import sac
+            from .exploration import diayn
+            self.critic = config.get('net_critic', sac.Critic)(config).to(self.device)
+            self.actor = config.get('net_actor', sac.Actor)(config).to(self.device)
+            self.discriminator = config.get('net_actor', diayn.Discriminator)(config).to(self.device)
+            self.models_to_load = [self.critic, self.actor, self.discriminator]
+            self.update_discriminator = lambda x, y: None
+            self.select_action = self.select_action_sac
+        
         else:
             raise NotImplementedError('No such method: ' + str(method_name))
         return
@@ -70,3 +87,12 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
         # import pdb; pdb.set_trace()
 
         return action
+
+
+    @torch.no_grad()
+    def select_action_sac(self, state):
+        self.select_action_start()
+        state = state.to(self.device)
+        action, logprob, mean = self.actor.sample(state)
+        return action
+

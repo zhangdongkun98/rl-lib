@@ -7,11 +7,11 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.distributions import Categorical, MultivariateNormal
 
-from .basic import prefix, Data
-from .buffer import RolloutBuffer
-from .utils import init_weights, hard_update
-from .template import MethodSingleAgent, Model
-from .template.model import FeatureExtractor, FeatureMapper
+from rllib.basic import prefix, Data
+from rllib.buffer import RolloutBuffer
+from rllib.utils import init_weights, hard_update
+from rllib.template import MethodSingleAgent, Model
+from rllib.template.model import FeatureExtractor, FeatureMapper
 
 
 class PPO(MethodSingleAgent):
@@ -34,7 +34,7 @@ class PPO(MethodSingleAgent):
     save_model_interval = 20
 
     def __init__(self, config, writer):
-        super(PPO, self).__init__(config, writer)
+        super().__init__(config, writer)
 
         ### param
         self.K_epochs = int(self.buffer_size / self.batch_size) * self.sample_reuse

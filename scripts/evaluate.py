@@ -33,16 +33,19 @@ def init(config):
 
     elif method_name == 'DIAYN':
         config.set('num_skills', 6)
+        config.dim_state += 1
         from rllib.exploration.diayn import DIAYN as Method
 
     else:
         raise NotImplementedError('Not support this method: {}.'.format(method_name))
     model_name = Method.__name__ + '-' + config.env_name
-    writer = rllib.basic.create_dir(config, model_name)
+    Method = rllib.evaluate.EvaluateSingleAgent
+
+    writer = rllib.basic.create_dir(config, model_name, mode='evaluate')
     method = Method(config, writer)
     if method_name == 'DIAYN':
         from rllib.exploration.diayn import EnvWrapper
-        env = EnvWrapper(env, method, config.num_skills)
+        env = EnvWrapper(env, method, config.num_skills, mode='evaluate')
     return writer, env, method
 
 
@@ -50,19 +53,13 @@ def run_one_episode(i_episode, config, writer, env, method):
     running_reward = 0
     avg_length = 0
     state = env.reset()
+    if hasattr(env, 'skill'):
+        print('\nskill: ', env.skill)
     while True:
         action = method.select_action( torch.from_numpy(state).unsqueeze(0).float() )
-        next_state, reward, done, info = env.step( action.cpu().numpy().squeeze() )
-
-        experience = rllib.template.Experience(
-                state=torch.from_numpy(state).float().unsqueeze(0),
-                next_state=torch.from_numpy(next_state).float().unsqueeze(0),
-                action=action.cpu(), reward=reward, done=done, info=rllib.basic.Data(**info))
-        method.store(experience)
+        next_state, reward, done, _ = env.step( action.cpu().numpy().squeeze() )
 
         state = next_state
-
-        method.update_parameters()
 
         running_reward += reward
         avg_length += 1
