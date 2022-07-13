@@ -16,10 +16,11 @@ from . import buffer
 '''methods'''
 
 from . import ppo
+from . import ppg
 
-from . import td3
-from . import ddpg
 from . import dqn
+from . import ddpg
+from . import td3
 
 from . import sac
 

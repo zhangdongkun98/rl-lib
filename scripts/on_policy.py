@@ -23,7 +23,16 @@ def init(config):
     method_name = config.method.upper()
     if method_name == 'PPO':
         from rllib.ppo import PPO as Method
-        config.set('net_ac', rllib.ppo.ActorCriticContinuous)
+        if config.continuous_action_space:
+            config.set('net_ac', rllib.ppo.ActorCriticContinuous)
+        else:
+            config.set('net_ac', rllib.ppo.ActorCriticDiscrete)
+    elif method_name == 'PPG':
+        from rllib.ppg import PPG as Method
+        if config.continuous_action_space:
+            config.set('net_ac', rllib.ppg.ActorCriticContinuous)
+        else:
+            config.set('net_ac', rllib.ppg.ActorCriticDiscrete)
     else:
         raise NotImplementedError('Not support this method.')
 
@@ -41,8 +50,7 @@ def run_one_episode(i_episode, config, writer, env, method):
     # while True:
     for i in range(config.epoch_length):
         action = method.select_action( torch.from_numpy(state).unsqueeze(0).float() )
-        # next_state, reward, done, _ = env.step(action.cpu().numpy().squeeze())
-        next_state, reward, done, _ = env.step(action.action.cpu().numpy().squeeze())
+        next_state, reward, done, _ = env.step(action.cpu().numpy().squeeze())
 
         if i == config.epoch_length -1:
             done = True
