@@ -27,16 +27,16 @@ class PPO(MethodSingleAgent):
     lr = 0.0003
     betas = (0.9, 0.999)
 
+    num_episodes = 20
     buffer_size = 2000
     batch_size = 32
     sample_reuse = 8
-
-    save_model_interval = 20
 
     def __init__(self, config, writer):
         super().__init__(config, writer)
 
         ### param
+        # self.buffer_size = config.time_tolerance * self.num_episodes
         self.num_iters = int(self.buffer_size / self.batch_size) * self.sample_reuse
 
         self.policy: Union[ActorCriticDiscrete, ActorCriticContinuous] = config.net_ac(config).to(self.device)
@@ -90,10 +90,10 @@ class PPO(MethodSingleAgent):
 
             self.update_callback(locals())
 
-            if self.step_train % self.save_model_interval == 0:
-                self._save_model(self.step_train)
-
         hard_update(self.policy_old, self.policy)
+
+        self._save_model()
+
         self.buffer.clear()
         return
 
