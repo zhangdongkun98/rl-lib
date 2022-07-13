@@ -21,8 +21,8 @@ class PPO(MethodSingleAgent):
 
     gamma = 0.99
     epsilon_clip = 0.2
-    weight_value = 1.0
     weight_entropy = 0.001
+    weight_value = 1.0
 
     lr = 0.0003
     betas = (0.9, 0.999)
@@ -37,7 +37,7 @@ class PPO(MethodSingleAgent):
         super().__init__(config, writer)
 
         ### param
-        self.K_epochs = int(self.buffer_size / self.batch_size) * self.sample_reuse
+        self.num_iters = int(self.buffer_size / self.batch_size) * self.sample_reuse
 
         self.policy: Union[ActorCriticDiscrete, ActorCriticContinuous] = config.net_ac(config).to(self.device)
         self.policy_old = copy.deepcopy(self.policy)
@@ -55,32 +55,32 @@ class PPO(MethodSingleAgent):
         self.update_parameters_start()
         print(prefix(self) + 'update step: ', self.step_update)
 
-        for _ in range(self.K_epochs):
+        for _ in range(self.num_iters):
             self.step_train += 1
 
             experience = self.buffer.sample(self.gamma)
-            old_states = experience.state
-            old_actions = experience.action.action
-            old_logprobs = experience.action.action_logprob
-            rewards = experience.reward
-            rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
+            state = experience.state
+            action = experience.action
+            reward = experience.reward
+            reward = (reward - reward.mean()) / (reward.std() + 1e-5)
 
-            logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
+            with torch.no_grad():
+                logprob_old, _, _, _ = self.policy_old.evaluate(state, action)
+            logprob, value, entropy, _ = self.policy.evaluate(state, action)
 
-            ratios = torch.exp(logprobs - old_logprobs.detach())
-            advantages = rewards - state_values.detach()
+            ratio = torch.exp(logprob - logprob_old)
+            advantage = reward - value.detach()
 
-            surr1 = ratios * advantages
-            surr2 = torch.clamp(ratios, 1-self.epsilon_clip, 1+self.epsilon_clip) * advantages
+            surr1 = ratio * advantage
+            surr2 = torch.clamp(ratio, 1-self.epsilon_clip, 1+self.epsilon_clip) * advantage
 
             loss_surr = -torch.min(surr1, surr2).mean()
-            loss_entropy = -self.weight_entropy* dist_entropy.mean()
-            loss_value = self.weight_value* self.critic_loss(state_values, rewards)
+            loss_entropy = -self.weight_entropy* entropy.mean()
+            loss_value = self.weight_value* self.critic_loss(value, reward)
             loss = loss_surr + loss_entropy + loss_value
 
             self.optimizer.zero_grad()
             loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.policy.parameters(), 10)
             self.optimizer.step()
 
             self.writer.add_scalar('method/loss', loss.detach().item(), self.step_train)
@@ -101,8 +101,8 @@ class PPO(MethodSingleAgent):
     @torch.no_grad()
     def select_action(self, state):
         self.select_action_start()
-        action, action_logprob, _ = self.policy_old(state.to(self.device))
-        return Data(action=action, action_logprob=action_logprob).cpu()
+        action, _, _ = self.policy_old(state.to(self.device))
+        return action.cpu()
 
 
 
@@ -123,21 +123,21 @@ class ActorCriticDiscrete(Model):
 
     def forward(self, state):
         x = self.fe(state)
-        action_probs = self.actor_no(self.actor(x))
-        dist = Categorical(action_probs)
+        action_prob = self.actor_no(self.actor(x))
+        dist = Categorical(action_prob)
         action = dist.sample()
-        return action.unsqueeze(1), dist.log_prob(action).unsqueeze(1), action_probs
+        return action.unsqueeze(1), action_prob, dist
 
     def evaluate(self, state, action):
         x = self.fe(state)
-        action_probs = self.actor_no(self.actor(x))
-        state_value = self.critic(x)
+        action_prob = self.actor_no(self.actor(x))
+        value = self.critic(x)
 
-        dist = Categorical(action_probs)
-        action_logprobs = dist.log_prob(action.squeeze()).unsqueeze(1)
-        dist_entropy = dist.entropy().unsqueeze(1)
+        dist = Categorical(action_prob)
+        logprob = dist.log_prob(action.squeeze()).unsqueeze(1)
+        entropy = dist.entropy().unsqueeze(1)
 
-        return action_logprobs, state_value, dist_entropy
+        return logprob, value, entropy, dist
 
 
 
@@ -175,8 +175,7 @@ class ActorCriticContinuous(Model):
         cov = torch.diag_embed( torch.exp(logstd) )
         dist = MultivariateNormal(mean, cov)
         action = dist.sample()
-        logprob = dist.log_prob(action).unsqueeze(1)
-        return action, logprob, mean
+        return action, mean, dist
     
 
     def evaluate(self, state, action):
@@ -191,5 +190,5 @@ class ActorCriticContinuous(Model):
         dist = MultivariateNormal(mean, cov)
         logprob = dist.log_prob(action).unsqueeze(1)
         entropy = dist.entropy().unsqueeze(1)
-        return logprob, value, entropy
+        return logprob, value, entropy, dist
 
