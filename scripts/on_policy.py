@@ -48,11 +48,11 @@ def run_one_episode(i_episode, config, writer, env, method):
     avg_length = 0
     state = env.reset()
     # while True:
-    for i in range(config.epoch_length):
+    for i in range(config.time_tolerance):
         action = method.select_action( torch.from_numpy(state).unsqueeze(0).float() )
         next_state, reward, done, _ = env.step(action.cpu().numpy().squeeze())
 
-        if i == config.epoch_length -1:
+        if i == config.time_tolerance -1:
             done = True
 
         experience = rllib.template.Experience(

@@ -24,13 +24,13 @@ class PPG(MethodSingleAgent):
     gamma = 0.99
     epsilon_clip = 0.2
     weight_entropy = 0.001
-    # weight_entropy = 0.01
     weight_clone = 1.0
 
     lr = 0.0003
     lr_critic = 0.0003
     betas = (0.9, 0.999)
 
+    # num_episodes = 20
     buffer_size = 2000
     batch_size = 32
     sample_reuse = 8
@@ -38,16 +38,15 @@ class PPG(MethodSingleAgent):
 
     auxiliary_freq = 32
 
-    save_model_interval = 20
-
     def __init__(self, config, writer):
         super().__init__(config, writer)
         self.step_train_auxiliary = -1
 
         ### param
+        # self.buffer_size = config.time_tolerance * self.num_episodes
         self.num_iters = int(self.buffer_size / self.batch_size) * self.sample_reuse
-        self.num_iters_auxiliary = int(self.buffer_size / self.batch_size) * self.sample_reuse_auxiliary
-        # self.num_iters_auxiliary = 8
+        # self.num_iters_auxiliary = int(self.buffer_size / self.batch_size) * self.sample_reuse_auxiliary
+        self.num_iters_auxiliary = 8
 
         self.policy: Union[ActorCriticDiscrete, ActorCriticContinuous] = config.net_ac(config).to(self.device)
         self.policy_old = copy.deepcopy(self.policy)
@@ -107,13 +106,12 @@ class PPG(MethodSingleAgent):
 
             self.update_callback(locals())
 
-            if self.step_train % self.save_model_interval == 0:
-                self._save_model(self.step_train)
-
         hard_update(self.policy_old, self.policy)
 
         if self.step_update % self.auxiliary_freq == 0:
             self.update_parameters_auxiliary()
+
+        self._save_model()
 
         self.buffer.clear()
         return

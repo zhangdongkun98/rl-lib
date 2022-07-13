@@ -36,26 +36,26 @@ class EnvParams(object):
             self.dim_state = env.observation_space.shape[0]
             self.dim_action = env.action_space.n
             self.solved_reward = 230
-            self.epoch_length = 300
+            self.time_tolerance = 300
             self.continuous_action_space = False
         elif self.env_name == 'LunarLanderContinuous-v2':
             self.dim_state = env.observation_space.shape[0]
             self.dim_action = env.action_space.shape[0]
             self.solved_reward = 230
-            self.epoch_length = 300
+            self.time_tolerance = 300
             self.continuous_action_space = True
 
         elif self.env_name == 'HalfCheetah-v2':
             self.dim_state = env.observation_space.shape[0]
             self.dim_action = env.action_space.shape[0]
             self.solved_reward = 500
-            self.epoch_length = 200 # int(3e10)
+            self.time_tolerance = 1000 # int(3e10)
             self.continuous_action_space = True
         elif self.env_name == 'Hopper-v2':
             self.dim_state = env.observation_space.shape[0]
             self.dim_action = env.action_space.shape[0]
             self.solved_reward = 1000
-            self.epoch_length = int(3e10)
+            self.time_tolerance = 1000 # int(3e10)
             self.continuous_action_space = True
 
         else:
