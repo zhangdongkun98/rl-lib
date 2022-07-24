@@ -31,7 +31,7 @@ class SAC(MethodSingleAgent):
 
     start_timesteps = 30000
 
-    save_model_interval = 1000
+    save_model_interval = 200
 
     def __init__(self, config, writer):
         super().__init__(config, writer)
