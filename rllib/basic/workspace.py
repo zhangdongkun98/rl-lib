@@ -86,6 +86,8 @@ def create_dir(config: YamlConfig, model_name, mode='train', writer_cls=Writer):
             config: need to contain:
                 config.description: str
     '''
+    if mode != 'train':
+        model_name += mode.capitalize()
     dataset_name = model_name + '/' + time.strftime('%Y-%m-%d-%H:%M:%S', time.localtime(time.time())) + '----' + str(config.description)
     if mode != 'train':
         dataset_name += '-' + mode
