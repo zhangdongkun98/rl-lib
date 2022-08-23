@@ -32,8 +32,8 @@ class TD3(MethodSingleAgent):
 
     save_model_interval = 200
 
-    def __init__(self, config, writer):
-        super().__init__(config, writer)
+    def __init__(self, config, writer, tag_name='method'):
+        super().__init__(config, writer, tag_name)
 
         self.critic = config.get('net_critic', Critic)(config).to(self.device)
         self.actor = config.get('net_actor', Actor)(config).to(self.device)
@@ -53,7 +53,7 @@ class TD3(MethodSingleAgent):
         if len(self.buffer) < self.start_timesteps:
             return
         self.update_parameters_start()
-        self.writer.add_scalar('method/buffer_size', len(self.buffer), self.step_update)
+        self.writer.add_scalar(f'{self.tag_name}/buffer_size', len(self.buffer), self.step_update)
 
         '''load data batch'''
         experience = self.buffer.sample()
@@ -77,7 +77,7 @@ class TD3(MethodSingleAgent):
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
-        self.writer.add_scalar('method/loss_critic', critic_loss.detach().item(), self.step_update)
+        self.writer.add_scalar(f'{self.tag_name}/loss_critic', critic_loss.detach().item(), self.step_update)
 
         '''actor'''
         if self.step_update % self.policy_freq == 0:
@@ -87,7 +87,7 @@ class TD3(MethodSingleAgent):
             self.actor_optimizer.step()
             self._update_model()
 
-            self.writer.add_scalar('method/loss_actor', actor_loss.detach().item(), self.step_update)
+            self.writer.add_scalar(f'{self.tag_name}/loss_actor', actor_loss.detach().item(), self.step_update)
 
         if self.step_update % self.save_model_interval == 0:
             self._save_model()

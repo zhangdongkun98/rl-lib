@@ -11,7 +11,7 @@ from ..basic import prefix
 from .model import Model
 
 class Method(object):
-    def __init__(self, config: YamlConfig, writer: Writer):
+    def __init__(self, config: YamlConfig, writer: Writer, tag_name='method'):
         config.set('method_name', self.__class__.__name__)
 
         self.config = config
@@ -19,8 +19,11 @@ class Method(object):
         self.device = config.device
         self.path_pack = config.path_pack
         self.writer = writer
-        self.output_dir = join(self.path_pack.output_path, 'method')
+        self.tag_name = tag_name
+        self.output_dir = join(self.path_pack.output_path, tag_name)
+        self.model_dir = self.path_pack.save_model_path + '_' + tag_name
         os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.model_dir, exist_ok=True)
 
         self.dtype = torch.float32
         self.step_train = self.step_update = -1
@@ -32,7 +35,7 @@ class Method(object):
     def _save_model(self, iter_num=None):
         if iter_num == None:
             iter_num = self.step_update
-        [model.save_model(self.path_pack.save_model_path, iter_num) for model in self.models_to_save]
+        [model.save_model(self.model_dir, iter_num) for model in self.models_to_save]
     def _load_model(self):
         [model.load_model() for model in self.models_to_load]
         return
@@ -67,8 +70,8 @@ class Method(object):
 
 
 class MethodSingleAgent(Method):
-    def __init__(self, config: YamlConfig, writer: Writer):
-        super(MethodSingleAgent, self).__init__(config, writer)
+    def __init__(self, config: YamlConfig, writer: Writer, tag_name='method'):
+        super(MethodSingleAgent, self).__init__(config, writer, tag_name)
 
         self.dim_state, self.dim_action = config.dim_state, config.dim_action
         self.step_select = -1

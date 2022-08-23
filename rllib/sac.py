@@ -33,8 +33,8 @@ class SAC(MethodSingleAgent):
 
     save_model_interval = 200
 
-    def __init__(self, config, writer):
-        super().__init__(config, writer)
+    def __init__(self, config, writer, tag_name='method'):
+        super().__init__(config, writer, tag_name)
 
         self.critic: Critic = config.get('net_critic', Critic)(config).to(self.device)
         self.actor: Actor = config.get('net_actor', Actor)(config).to(self.device)
@@ -59,7 +59,7 @@ class SAC(MethodSingleAgent):
         if len(self.buffer) < self.start_timesteps:
             return
         self.update_parameters_start()
-        self.writer.add_scalar('method/buffer_size', len(self.buffer), self.step_update)
+        self.writer.add_scalar(f'{self.tag_name}/buffer_size', len(self.buffer), self.step_update)
 
         '''load data batch'''
         experience = self.buffer.sample()
@@ -98,9 +98,9 @@ class SAC(MethodSingleAgent):
 
         self.alpha = self.log_alpha.exp().detach()
 
-        self.writer.add_scalar('method/loss_critic', critic_loss.detach().item(), self.step_update)
-        self.writer.add_scalar('method/loss_actor', actor_loss.detach().item(), self.step_update)
-        self.writer.add_scalar('method/alpha', self.alpha.detach().item(), self.step_update)
+        self.writer.add_scalar(f'{self.tag_name}/loss_critic', critic_loss.detach().item(), self.step_update)
+        self.writer.add_scalar(f'{self.tag_name}/loss_actor', actor_loss.detach().item(), self.step_update)
+        self.writer.add_scalar(f'{self.tag_name}/alpha', self.alpha.detach().item(), self.step_update)
 
         self._update_model()
         if self.step_update % self.save_model_interval == 0:
