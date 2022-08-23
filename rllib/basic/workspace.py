@@ -106,7 +106,7 @@ def create_dir(config: YamlConfig, model_name, mode='train', writer_cls=Writer):
         compress_code(code_path, codes)
 
     writer = writer_cls(log_dir=log_path, comment=dataset_name, max_queue=100)
-    path_pack = PathPack(log_path, save_model_path, output_path, code_path)
+    path_pack = YamlConfig(log_path=log_path, save_model_path=save_model_path, output_path=output_path, code_path=code_path)
     config.set('dataset_name', dataset_name)
     config.set('path_pack', path_pack)
 

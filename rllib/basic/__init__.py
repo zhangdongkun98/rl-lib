@@ -12,7 +12,7 @@ from .tools import fig2array
 from .image import image_transforms, image_transforms_reverse
 
 from .yaml import YamlConfig
-from .workspace import create_dir, Writer, PathPack, PseudoWriter
+from .workspace import create_dir, Writer, PseudoWriter
 
 from . import pytorch
 
