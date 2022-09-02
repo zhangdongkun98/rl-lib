@@ -6,8 +6,8 @@ import torch
 
 
 class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
-    def __init__(self, config, writer):
-        super().__init__(config, writer)
+    def __init__(self, config, writer, tag_name='method'):
+        super().__init__(config, writer, tag_name)
 
         self.config = config
 

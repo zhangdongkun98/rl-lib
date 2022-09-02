@@ -3,6 +3,8 @@ import torch
 import os
 from os.path import join
 from typing import List
+import time
+import tqdm
 
 from ..basic import Data
 from ..basic import YamlConfig
@@ -50,13 +52,23 @@ class Method(object):
         # local.pop('__class__')
         return Data(**local)
 
-    def update_parameters_(self, n_iters=1000):
-        print(prefix(self) + 'total iters: ', n_iters)
-        for i in range(n_iters):
-            if i % (n_iters //10) == 0:
-                print(prefix(self) + 'update_parameters i: ', i)
+    def update_parameters_(self, index, n_iters=1000):
+        t1 = time.time()
+
+        # for i in range(n_iters):
+        #     if i % (n_iters //10) == 0:
+        #         print(prefix(self) + 'update_parameters index / total: ', i, n_iters)
+        #     self.update_parameters()
+
+        for i in tqdm.tqdm(range(n_iters)):
+        # for i in range(n_iters):
             self.update_parameters()
-        print()
+        
+        t2 = time.time()
+        self.writer.add_scalar(f'{self.tag_name}/update_time', t2-t1, index)
+        self.writer.add_scalar(f'{self.tag_name}/update_iters', n_iters, index)
+        self.writer.add_scalar(f'{self.tag_name}/update_time_per_iter', (t2-t1) /n_iters, index)
+        # print()
         return
 
     def update_parameters(self):
