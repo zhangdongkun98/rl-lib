@@ -2,6 +2,7 @@ from .data import BaseData, Data
 
 from .system import set_trace, get_class_name, prefix, spin, silent
 from .system import get_parent_class, get_class_parameters
+from .system import mkdir, isdir
 
 from .tools import setup_seed
 from .tools import *

@@ -104,6 +104,20 @@ cpu_memory_profile = memory_profiler.profile
 
 
 
+##############################################
+############ file system #####################
+##############################################
+
+
+def mkdir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+def isdir(path):
+    return os.path.exists(path) and not os.path.isfile(path)
+
+
+
 
 ##############################################
 ############ silent ##########################

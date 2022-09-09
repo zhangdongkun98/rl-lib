@@ -22,8 +22,10 @@ class Method(object):
         self.path_pack = config.path_pack
         self.writer = writer
         self.tag_name = tag_name
+        self.log_dir = join(self.path_pack.log_path, tag_name)
         self.output_dir = join(self.path_pack.output_path, tag_name)
         self.model_dir = self.path_pack.save_model_path + '_' + tag_name
+        os.makedirs(self.log_dir, exist_ok=True)
         os.makedirs(self.output_dir, exist_ok=True)
         os.makedirs(self.model_dir, exist_ok=True)
 
@@ -78,7 +80,7 @@ class Method(object):
     def get_writer(self):
         return self.writer
     def reset_writer(self):
-        self.writer = Writer(log_dir=self.config.path_pack.log_path, comment=self.config.dataset_name, max_queue=100)
+        self.writer = Writer(log_dir=self.log_dir, comment=self.config.dataset_name, max_queue=100)
 
 
 class MethodSingleAgent(Method):
