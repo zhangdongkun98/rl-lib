@@ -1,7 +1,7 @@
 
-from typing import ValuesView
 import yaml
-from os.path import join
+import os
+import pickle
 
 from .system import get_class_name
 
@@ -115,8 +115,14 @@ class YamlConfig(object):
                 else: result[attribute] = value
         return result
 
+
     def save(self, path):
-        config_dict = self.to_dict()
-        with open(join(path, 'config.yaml'), 'w', encoding='utf-8') as f:
-            yaml.dump(data=config_dict, stream=f, allow_unicode=True)
+        with open(os.path.join(path, 'config.txt'), 'wb') as f:
+            pickle.dump(self, f)
         return
+
+    @staticmethod
+    def load(file_path):
+        with open(os.path.expanduser(file_path), 'rb') as f:
+            config = pickle.load(f)
+        return config
