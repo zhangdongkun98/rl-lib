@@ -132,8 +132,8 @@ class Actor(Model):
     logstd_min = -5
     logstd_max = 1
 
-    def __init__(self, config):
-        super().__init__(config, model_id=0)
+    def __init__(self, config, model_id=0):
+        super().__init__(config, model_id)
 
         self.fe = config.get('net_actor_fe', FeatureExtractor)(config, 0)
         self.mean = config.get('net_actor_fm', FeatureMapper)(config, 0, self.fe.dim_feature, config.dim_action)
@@ -190,8 +190,8 @@ class Actor(Model):
 
 
 class Critic(Model):
-    def __init__(self, config):
-        super().__init__(config, model_id=0)
+    def __init__(self, config, model_id=0):
+        super().__init__(config, model_id)
 
         self.fe = config.get('net_critic_fe', FeatureExtractor)(config, 0)
         self.fm1 = config.get('net_critic_fm', FeatureMapper)(config, 0, self.fe.dim_feature+config.dim_action, 1)
