@@ -13,6 +13,7 @@ from rldev import fig2array
 from rldev import image_transforms, image_transforms_reverse
 
 from rldev import YamlConfig
+from rldev.yaml import parse_yaml_file, parse_yaml_file_unsafe
 from rldev import create_dir, Writer, PseudoWriter
 
 from rldev import pytorch
