@@ -23,13 +23,19 @@ pip install torch==1.9.1
 pip install torchvision==0.10.1
 ```
 
-### 2. gym envs (optional)
+### 2. rl-dev
+```bash
+pip install rl-dev==0.0.2
+```
+
+
+### 3. gym envs (optional)
 ```bash
 pip install box2d-py
 pip install atari-py
 ```
 
-### 3. MuJoCo and mujoco-py (optional)
+### 4. MuJoCo and mujoco-py (optional)
 
 [MuJoCo download](https://mujoco.org/download) <br>
 [mujoco-py repo](https://github.com/openai/mujoco-py) <br>
