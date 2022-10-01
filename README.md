@@ -25,7 +25,7 @@ pip install torchvision==0.10.1
 
 ### 2. rl-dev
 ```bash
-pip install rl-dev==0.0.2
+pip install rldev==0.0.2
 ```
 
 
