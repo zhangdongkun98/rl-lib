@@ -8,7 +8,10 @@ import torch.nn as nn
 
 class Model(nn.Module):
     def __init__(self, config, model_id=0):
-        super(Model, self).__init__()
+        """
+            config: contains method_name, model_dir, model_num, device
+        """
+        super().__init__()
         self.model_id = model_id
         self.method_name = config.method_name
         self.model_dir = config.model_dir
