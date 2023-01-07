@@ -12,6 +12,7 @@ class Model(nn.Module):
             config: contains method_name, model_dir, model_num, device
         """
         super().__init__()
+        self.config = config
         self.model_id = model_id
         self.method_name = config.method_name
         self.model_dir = config.model_dir

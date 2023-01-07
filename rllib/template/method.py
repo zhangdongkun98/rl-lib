@@ -6,6 +6,8 @@ from typing import List
 import time
 import tqdm
 
+from torch.optim import Optimizer
+
 from ..basic import Data
 from ..basic import YamlConfig
 from ..basic import Writer
@@ -34,6 +36,7 @@ class Method(object):
 
         self.models: List[Model] = []
         self.models_to_load, self.models_to_save = None, None
+        self.optimizers: List[Optimizer] = []
 
 
     def _save_model(self, iter_num=None):
@@ -82,6 +85,18 @@ class Method(object):
     def reset_writer(self):
         self.writer = Writer(log_dir=self.log_dir, comment=self.config.dataset_name, max_queue=100)
 
+    def get_models(self):
+        return self.models_to_save
+
+    def get_model_params(self):
+        models = self.get_models()
+        model_params = [[param.data for param in model.parameters()] for model in models]
+        return model_params
+
+    def get_optimizers(self):
+        return self.optimizers
+
+
 
 class MethodSingleAgent(Method):
     def __init__(self, config: YamlConfig, writer: Writer, tag_name='method'):
@@ -103,4 +118,8 @@ class MethodSingleAgent(Method):
         if hasattr(self.buffer, 'close'):
             self.buffer.close()
         return
+
+
+    def get_buffer(self):
+        return self.buffer
 

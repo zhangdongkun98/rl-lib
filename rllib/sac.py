@@ -43,6 +43,7 @@ class SAC(MethodSingleAgent):
 
         self.critic_optimizer= Adam(self.critic.parameters(), lr=self.lr_critic)
         self.actor_optimizer = Adam(self.actor.parameters(), lr=self.lr_actor)
+        self.optimizers = [self.critic_optimizer, self.actor_optimizer]
         self.critic_loss = nn.MSELoss()
 
         ### automatic entropy tuning
