@@ -45,7 +45,7 @@ class Model(nn.Module):
         model_name = '_'.join([self.method_name.upper(), self.__class__.__name__, str(self.model_id), str(model_num), '.pth'])
         model_path = join(model_dir, model_name)
         print('[rllib.template.Model.load_model] load model: ', model_path)
-        self.load_state_dict(torch.load(model_path))
+        self.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     
     def save_model(self, path, iter_num):
         model_name = '_'.join([self.method_name.upper(), self.__class__.__name__, str(self.model_id), str(iter_num), '.pth'])
