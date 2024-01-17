@@ -36,6 +36,19 @@ class SAC(MethodSingleAgent):
     def __init__(self, config, writer, tag_name='method'):
         super().__init__(config, writer, tag_name)
 
+        ### params
+        self.batch_size = config.get('batch_size', self.batch_size)
+        self.buffer_size = config.get('buffer_size', self.buffer_size)
+        self.start_timesteps = config.get('start_timesteps', self.start_timesteps)
+        assert self.start_timesteps <= self.buffer_size
+
+        self.reward_scale = config.get('reward_scale', self.reward_scale)
+
+        self.lr_critic = config.get('lr_critic', self.lr_critic)
+        self.lr_actor = config.get('lr_actor', self.lr_actor)
+        self.lr_tune = config.get('lr_tune', self.lr_tune)
+
+        ### model
         self.critic: Critic = config.get('net_critic', Critic)(config).to(self.device)
         self.actor: Actor = config.get('net_actor', Actor)(config).to(self.device)
         self.critic_target = copy.deepcopy(self.critic)
