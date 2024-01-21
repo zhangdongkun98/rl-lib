@@ -87,6 +87,7 @@ class PPO(MethodSingleAgent):
             self.writer.add_scalar('method/loss_surr', loss_surr.detach().item(), self.step_train)
             self.writer.add_scalar('method/loss_entropy', loss_entropy.detach().item(), self.step_train)
             self.writer.add_scalar('method/loss_value', loss_value.detach().item(), self.step_train)
+            self.writer.add_scalar('method/ratio_offline', (ratio.detach() -1).abs().mean().detach().item(), self.step_train)
 
             self.update_callback(locals())
 

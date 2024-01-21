@@ -46,6 +46,8 @@ class RolloutBuffer(object):
                 discounted_reward = e.reward + gamma * discounted_reward
                 rewards.insert(0, discounted_reward)
             
+            # rewards = np.array(rewards)
+            # rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
             for e, reward in zip(self.memory, rewards):
                 e.update(reward=reward)
             

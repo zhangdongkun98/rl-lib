@@ -26,10 +26,9 @@ class SAC(MethodSingleAgent):
 
     tau = 0.005
 
-    buffer_size = 1000000
+    replay_buffer_size = 1000000
+    buffer_size = 30000
     batch_size = 256
-
-    start_timesteps = 30000
 
     save_model_interval = 200
 
@@ -38,9 +37,9 @@ class SAC(MethodSingleAgent):
 
         ### params
         self.batch_size = config.get('batch_size', self.batch_size)
+        self.replay_buffer_size = config.get('replay_buffer_size', self.replay_buffer_size)
         self.buffer_size = config.get('buffer_size', self.buffer_size)
-        self.start_timesteps = config.get('start_timesteps', self.start_timesteps)
-        assert self.start_timesteps <= self.buffer_size
+        assert self.buffer_size <= self.replay_buffer_size
 
         self.reward_scale = config.get('reward_scale', self.reward_scale)
 
@@ -66,14 +65,14 @@ class SAC(MethodSingleAgent):
         self.alpha = self.log_alpha.exp().detach()
         self.alpha_optimizer = Adam([self.log_alpha], lr=self.lr_tune)
 
-        self.buffer: ReplayBuffer = config.get('buffer', ReplayBuffer)(config, self.buffer_size, self.batch_size, self.device)
+        self.buffer: ReplayBuffer = config.get('buffer', ReplayBuffer)(config, self.replay_buffer_size, self.batch_size, self.device)
 
 
     def update_parameters(self):
-        if len(self.buffer) < self.start_timesteps:
+        if len(self.buffer) < self.buffer_size:  ### start timestamps
             return
         self.update_parameters_start()
-        self.writer.add_scalar(f'{self.tag_name}/buffer_size', len(self.buffer), self.step_update)
+        self.writer.add_scalar(f'{self.tag_name}/replay_buffer_size', len(self.buffer), self.step_update)
 
         '''load data batch'''
         experience = self.buffer.sample()
@@ -128,7 +127,7 @@ class SAC(MethodSingleAgent):
     def select_action(self, state):
         self.select_action_start()
 
-        if self.step_select < self.start_timesteps:
+        if self.step_select < self.buffer_size:
             action = torch.Tensor(1,self.dim_action).uniform_(-1,1)
         else:
             action, _, _ = self.actor.sample(state.to(self.device))
