@@ -27,7 +27,6 @@ class PPO(MethodSingleAgent):
     lr = 0.0003
     betas = (0.9, 0.999)
 
-    num_episodes = 20
     buffer_size = 2000
     batch_size = 32
     sample_reuse = 8
@@ -36,9 +35,14 @@ class PPO(MethodSingleAgent):
         super().__init__(config, writer)
 
         ### param
-        # self.buffer_size = config.time_tolerance * self.num_episodes
+        self.batch_size = config.get('batch_size', self.batch_size)
+        self.buffer_size = config.get('buffer_size', self.buffer_size)
+        self.sample_reuse = config.get('sample_reuse', self.sample_reuse)
         self.num_iters = int(self.buffer_size / self.batch_size) * self.sample_reuse
 
+        self.lr = config.get('lr', self.lr)
+
+        ### model
         self.policy: Union[ActorCriticDiscrete, ActorCriticContinuous] = config.net_ac(config).to(self.device)
         self.policy_old = copy.deepcopy(self.policy)
         self.models_to_save = [self.policy]
