@@ -52,13 +52,13 @@ def run_one_episode(i_episode, config, writer, env, method):
     avg_length = 0
     state = env.reset()
     while True:
-        action = method.select_action( torch.from_numpy(state).unsqueeze(0).float() )
-        next_state, reward, done, info = env.step( action.cpu().numpy().squeeze() )
+        action_data = method.select_action( torch.from_numpy(state).unsqueeze(0).float() )
+        next_state, reward, done, info = env.step( action_data.action.cpu().numpy().squeeze() )
 
         experience = rllib.template.Experience(
                 state=torch.from_numpy(state).float().unsqueeze(0),
                 next_state=torch.from_numpy(next_state).float().unsqueeze(0),
-                action=action.cpu(), reward=reward, done=done, info=rllib.basic.Data(**info))
+                action_data=action_data.cpu(), reward=reward, done=done, info=rllib.basic.Data(**info))
         method.store(experience)
 
         state = next_state

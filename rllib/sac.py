@@ -1,3 +1,4 @@
+import rldev
 
 import copy
 import numpy as np
@@ -77,7 +78,7 @@ class SAC(MethodSingleAgent):
         '''load data batch'''
         experience = self.buffer.sample()
         state = experience.state
-        action = experience.action
+        action = experience.action_data.action
         next_state = experience.next_state
         reward = experience.reward *self.reward_scale
         done = experience.done
@@ -132,7 +133,7 @@ class SAC(MethodSingleAgent):
         else:
             action, _, _ = self.actor.sample(state.to(self.device))
             action = action.cpu()
-        return action
+        return rldev.Data(action=action)
 
 
     def _update_model(self):

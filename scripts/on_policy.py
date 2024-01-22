@@ -60,13 +60,13 @@ def run_one_episode(i_episode, config, writer, env, method):
     running_reward = 0
     avg_length = 0
     state = env.reset()
-    # while True:
-    for i in range(config.time_tolerance):
+    while True:
+    # for i in range(config.time_tolerance):
         action_data = method.select_action( torch.from_numpy(state).unsqueeze(0).float() )
         next_state, reward, done, _ = env.step(action_data.action.numpy().squeeze())
 
-        if i == config.time_tolerance -1:
-            done = True
+        # if i == config.time_tolerance -1:
+        #     done = True
 
         experience = rllib.template.Experience(
                 state=torch.from_numpy(state).float().unsqueeze(0),
