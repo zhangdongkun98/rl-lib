@@ -87,4 +87,4 @@ pip install -e .
 - https://github.com/sfujim/TD3
 - https://github.com/haarnoja/sac
 - https://github.com/pranz24/pytorch-soft-actor-critic
-
+- https://github.com/lnpalmer/A2C

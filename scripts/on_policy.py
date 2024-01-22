@@ -27,6 +27,13 @@ def init(config):
             config.set('net_ac', rllib.ppo_simple.ActorCriticContinuous)
         else:
             config.set('net_ac', rllib.ppo_simple.ActorCriticDiscrete)
+
+    elif method_name == 'A1C':
+        from rllib.a1c import A1C as Method
+        if config.continuous_action_space:
+            config.set('net_ac', rllib.a1c.ActorCriticContinuous)
+        else:
+            config.set('net_ac', rllib.a1c.ActorCriticDiscrete)
     elif method_name == 'PPO':
         from rllib.ppo import PPO as Method
         if config.continuous_action_space:
