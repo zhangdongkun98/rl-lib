@@ -9,8 +9,9 @@ from .tools import stack_data
 
 
 class RolloutBuffer(object):
-    def __init__(self, config, device, batch_size=-1):
+    def __init__(self, config, device, batch_size=-1, use_gae=False):
         self.batch_size, self.device = batch_size, device
+        self.use_gae = use_gae
         self.memory: List[Experience] = []
         self.rollout_reward = False
 
@@ -18,8 +19,11 @@ class RolloutBuffer(object):
         self.memory.append(experience)
 
 
-    def sample(self, gamma):
-        self.reward2return(gamma)
+    def sample(self, gamma, gae_lambda=0.9, advantage_normalization=False):
+        if self.use_gae:
+            self.compute_returns_and_advantage(gamma, gae_lambda, advantage_normalization)
+        else:
+            self.reward2return(gamma)
         batch_size = len(self) if self.batch_size <= 0 else self.batch_size
         batch = self.get_batch(batch_size)
         experiences: Experience = self._batch_stack(batch)
@@ -34,26 +38,6 @@ class RolloutBuffer(object):
         self.rollout_reward = False
 
 
-    def reward2return(self, gamma):
-        if not self.rollout_reward:
-            self.rollout_reward = True
-
-            rewards = []
-            discounted_reward = 0
-            for e in reversed(self.memory):
-                if e.done:
-                    discounted_reward = 0
-                discounted_reward = e.reward + gamma * discounted_reward
-                rewards.insert(0, discounted_reward)
-            
-            # rewards = np.array(rewards)
-            # rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-5)
-            for e, reward in zip(self.memory, rewards):
-                e.update(reward=reward)
-            
-            self.memory = np.array(self.memory, dtype=Experience)
-        return
-
     def get_batch(self, batch_size):
         indices = np.random.choice(len(self), batch_size, replace=False)
         batch = self.memory[indices]
@@ -65,10 +49,67 @@ class RolloutBuffer(object):
         """
 
         result = stack_data(batch)
-
-        result.update(reward=[*torch.tensor(result.reward, dtype=torch.float32).unsqueeze(1)])
-        result.update(done=[*torch.tensor(result.done, dtype=torch.float32).unsqueeze(1)])
         result = result.cat(dim=0)
-        result.reward.unsqueeze_(1)
-        result.done.unsqueeze_(1)
+        result.reward = result.reward.unsqueeze(1).to(torch.float32)
+        result.done = result.done.unsqueeze(1).to(torch.float32)
         return result
+
+
+    def reward2return(self, gamma):
+        if self.rollout_reward:
+            return
+        
+        self.rollout_reward = True
+
+        returns = torch.zeros(len(self), dtype=torch.float32)
+        discounted_reward = 0
+        for idx in reversed(range(len(self))):
+            e = self.memory[idx]
+            if e.done:
+                discounted_reward = 0
+            discounted_reward = e.reward + gamma * discounted_reward
+            returns[idx] = discounted_reward
+        
+        returns = returns[..., None,None]
+        for e, r in zip(self.memory, returns):
+            e.update(returns=r)
+        
+        self.memory = np.array(self.memory, dtype=Experience)
+        return
+
+
+    def compute_returns_and_advantage(self, gamma, gae_lambda, advantage_normalization):
+        if self.rollout_reward:
+            return
+        
+        self.rollout_reward = True
+        last_gae_lam = 0
+
+        assert self.memory[-1].done == True
+
+        advantages = torch.zeros(len(self), dtype=torch.float32)
+        returns = torch.zeros(len(self), dtype=torch.float32)
+        for idx in reversed(range(len(self))):
+            e = self.memory[idx]
+            e_next = self.memory[min(idx +1, len(self)-1)]
+
+            next_non_terminal = 1.0 - e_next.done
+            next_value = e_next.action_data.value.item()
+
+            delta = e.reward + gamma * next_value * next_non_terminal - e.action_data.value.item()
+            last_gae_lam = delta + gamma * gae_lambda * next_non_terminal * last_gae_lam
+
+            advantages[idx] = last_gae_lam
+            returns[idx] = advantages[idx] + e.action_data.value.item()
+
+        if advantage_normalization:
+            advantages = (advantages - advantages.mean()) / (advantages.std() + np.finfo(np.float32).eps)
+
+        advantages = advantages[..., None,None]
+        returns = returns[..., None,None]
+        for e, r, ad in zip(self.memory, returns, advantages):
+            e.update(returns=r, advantage=ad)
+        self.memory = np.array(self.memory, dtype=Experience)
+        return
+
+

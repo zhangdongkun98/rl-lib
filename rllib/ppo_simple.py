@@ -14,26 +14,33 @@ from rllib.template import MethodSingleAgent, Model
 from rllib.template.model import FeatureExtractor, FeatureMapper
 
 
-class PPO(MethodSingleAgent):
+class PPOSimple(MethodSingleAgent):
+    """
+        config: net_ac, buffer
+    """
+
+    gamma = 0.99
+    epsilon_clip = 0.2
+    weight_entropy = 0.001
+    weight_value = 1.0
+
+    lr = 0.0003
+    betas = (0.9, 0.999)
+
+    buffer_size = 2000
+    batch_size = 32
+    sample_reuse = 8
+
     def __init__(self, config, writer):
         super().__init__(config, writer)
 
         ### param
-        self.gamma = config.get('gamma', 0.99)
-        self.gae_lambda = config.get('gae_lambda', 0.9)
-
-        self.batch_size = config.get('batch_size', 32)
-        self.buffer_size = config.get('buffer_size', 2000)
-        self.sample_reuse = config.get('sample_reuse', 8)
+        self.batch_size = config.get('batch_size', self.batch_size)
+        self.buffer_size = config.get('buffer_size', self.buffer_size)
+        self.sample_reuse = config.get('sample_reuse', self.sample_reuse)
         self.num_iters = int(self.buffer_size / self.batch_size) * self.sample_reuse
 
-        self.lr = config.get('lr', 0.0003)
-        self.betas = config.get('betas', (0.9, 0.999))
-        self.max_grad_norm = config.get('max_grad_norm', 0.5)
-
-        self.epsilon_clip = config.get('epsilon_clip', 0.2)
-        self.weight_value = config.get('weight_value', 0.5)
-        self.weight_entropy = config.get('weight_entropy', 0.001)
+        self.lr = config.get('lr', self.lr)
 
         ### model
         self.policy: Union[ActorCriticDiscrete, ActorCriticContinuous] = config.net_ac(config).to(self.device)
@@ -43,7 +50,7 @@ class PPO(MethodSingleAgent):
         self.optimizer = Adam(self.policy.parameters(), lr=self.lr, betas=self.betas)
         self.critic_loss = nn.MSELoss()
 
-        self.buffer: RolloutBuffer = config.get('buffer', RolloutBuffer)(config, self.device, self.batch_size, use_gae=True)
+        self.buffer: RolloutBuffer = config.get('buffer', RolloutBuffer)(config, self.device, self.batch_size)
 
 
     def update_parameters(self):
@@ -55,33 +62,29 @@ class PPO(MethodSingleAgent):
         for _ in range(self.num_iters):
             self.step_train += 1
 
-            experience = self.buffer.sample(self.gamma, self.gae_lambda, advantage_normalization=True)
+            experience = self.buffer.sample(self.gamma)
             state = experience.state
             action = experience.action_data.action
-            logprob_old = experience.action_data.logprob
-            value_old = experience.action_data.value
-
             returns = experience.returns
-            advantage = experience.advantage
+            returns = (returns - returns.mean()) / (returns.std() + 1e-5)
 
-            ### no need
-            # with torch.no_grad():
-            #     logprob_old, value_old, _, _ = self.policy_old.evaluate(state, action)
-
+            with torch.no_grad():
+                logprob_old, _, _, _ = self.policy_old.evaluate(state, action)
             logprob, value, entropy, _ = self.policy.evaluate(state, action)
 
             ratio = torch.exp(logprob - logprob_old)
+            advantage = returns - value.detach()
+
             surr1 = ratio * advantage
             surr2 = torch.clamp(ratio, 1-self.epsilon_clip, 1+self.epsilon_clip) * advantage
-            loss_surr = -torch.min(surr1, surr2).mean()
 
-            loss_value = self.weight_value* self.critic_loss(value, returns)
+            loss_surr = -torch.min(surr1, surr2).mean()
             loss_entropy = -self.weight_entropy* entropy.mean()
+            loss_value = self.weight_value* self.critic_loss(value, returns)
             loss = loss_surr + loss_entropy + loss_value
 
             self.optimizer.zero_grad()
             loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
             self.optimizer.step()
 
             self.writer.add_scalar('method/loss', loss.detach().item(), self.step_train)
@@ -131,7 +134,6 @@ class ActorCriticDiscrete(Model):
         return action.unsqueeze(1), action_prob, dist
 
     def evaluate(self, state, action):
-        raise NotImplementedError
         x = self.fe(state)
         action_prob = self.actor_no(self.actor(x))
         value = self.critic(x)
@@ -174,13 +176,11 @@ class ActorCriticContinuous(Model):
         logstd = torch.tanh(self.std(x))
         logstd = (self.logstd_max-self.logstd_min) * logstd + (self.logstd_max+self.logstd_min)
         logstd *= 0.5
-        value = self.critic(x)
 
         cov = torch.diag_embed( torch.exp(logstd) )
         dist = MultivariateNormal(mean, cov)
         action = dist.sample()
-        logprob = dist.log_prob(action).unsqueeze(1)
-        return Data(action=action, logprob=logprob, mean=mean, logstd=logstd, value=value)
+        return Data(action=action, mean=mean, logstd=logstd)
     
 
     def evaluate(self, state, action):

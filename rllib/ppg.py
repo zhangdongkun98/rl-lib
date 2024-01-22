@@ -13,7 +13,7 @@ from rllib.utils import init_weights, hard_update
 from rllib.template import MethodSingleAgent, Model
 from rllib.template.model import FeatureExtractor, FeatureMapper
 
-from rllib.ppo import ActorCriticDiscrete, ActorCriticContinuous
+from rllib.ppo_simple import ActorCriticDiscrete, ActorCriticContinuous
 
 
 class PPG(MethodSingleAgent):

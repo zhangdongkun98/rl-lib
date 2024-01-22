@@ -24,8 +24,8 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
     def select_method(self):
         config, method_name = self.config, self.method_name
         if method_name == 'PPO':
-            from . import ppo
-            self.policy: Union[ppo.ActorCriticDiscrete, ppo.ActorCriticContinuous] = config.net_ac(config).to(self.device)
+            from . import ppo_simple
+            self.policy: Union[ppo_simple.ActorCriticDiscrete, ppo_simple.ActorCriticContinuous] = config.net_ac(config).to(self.device)
             self.models_to_load = [self.policy]
             self.select_action = self.select_action_ppo
         elif method_name == 'TD3':

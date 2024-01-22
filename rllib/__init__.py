@@ -13,9 +13,10 @@ from . import utils
 from . import template
 from . import buffer
 
-'''methods'''
 
-from . import ppo
+'''methods'''
+from . import a1c
+from . import ppo_simple, ppo
 from . import ppg
 
 from . import dqn

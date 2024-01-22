@@ -21,6 +21,12 @@ def generate_args():
     argparser.add_argument('--seed', default=0, type=int, help='seed.')
     argparser.add_argument('--render', action='store_true', help='render the env (default: False)')
 
+    ### method params
+    argparser.add_argument('--batch-size', default=32, type=int, help='[Method Param]')
+    argparser.add_argument('--buffer-size', default=2000, type=int, help='[Method Param]')
+
+    argparser.add_argument('--weight-value', default=0.005, type=float, help='[Method Param] available: PPO')
+    argparser.add_argument('--weight-entropy', default=0.001, type=float, help='[Method Param] available: PPO')
 
     args = argparser.parse_args()
     return args

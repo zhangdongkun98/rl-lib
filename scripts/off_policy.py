@@ -37,7 +37,8 @@ def init(config):
 
     else:
         raise NotImplementedError('Not support this method: {}.'.format(method_name))
-    model_name = Method.__name__ + '-' + config.env_name
+    
+    model_name = f'{config.env_name}/{Method.__name__}'
     writer = rllib.basic.create_dir(config, model_name)
     method = Method(config, writer)
     if method_name == 'DIAYN':
