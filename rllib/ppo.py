@@ -126,12 +126,15 @@ class ActorCriticDiscrete(Model):
     def forward(self, state):
         x = self.fe(state)
         action_prob = self.actor_no(self.actor(x))
+        value = self.critic(x)
+
         dist = Categorical(action_prob)
         action = dist.sample()
-        return action.unsqueeze(1), action_prob, dist
+        logprob = dist.log_prob(action.squeeze()).unsqueeze(1)
+
+        return Data(action=action, logprob=logprob, value=value)
 
     def evaluate(self, state, action):
-        raise NotImplementedError
         x = self.fe(state)
         action_prob = self.actor_no(self.actor(x))
         value = self.critic(x)

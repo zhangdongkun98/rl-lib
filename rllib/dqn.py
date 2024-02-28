@@ -1,4 +1,4 @@
-
+import rldev
 
 import copy
 import random
@@ -51,7 +51,7 @@ class DQN(MethodSingleAgent):
         '''load data batch'''
         experience = self.buffer.sample()
         state = experience.state
-        action = experience.action
+        action = experience.action_data.action
         next_state = experience.next_state
         reward = experience.reward
         done = experience.done
@@ -85,7 +85,7 @@ class DQN(MethodSingleAgent):
         else:
             action_value = self.policy(state.to(self.device))
             action = torch.argmax(action_value, dim=1).cpu().reshape(1,-1)
-        return action
+        return rldev.Data(action=action)
 
     def _update_model(self):
         # print('[update_parameters] soft update')
