@@ -39,6 +39,7 @@ class PPO(MethodSingleAgent):
         self.policy: Union[ActorCriticDiscrete, ActorCriticContinuous] = config.net_ac(config).to(self.device)
         self.policy_old = copy.deepcopy(self.policy)
         self.models_to_save = [self.policy]
+        self.models = [self.policy, self.policy_old]
 
         self.optimizer = Adam(self.policy.parameters(), lr=self.lr, betas=self.betas)
         self.critic_loss = nn.MSELoss()
