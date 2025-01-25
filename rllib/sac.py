@@ -29,6 +29,7 @@ class SAC(MethodSingleAgent):
 
     replay_buffer_size = 1000000
     buffer_size = 30000
+    num_iters = 100
     batch_size = 256
 
     save_model_interval = 200
@@ -40,6 +41,7 @@ class SAC(MethodSingleAgent):
         self.batch_size = config.get('batch_size', self.batch_size)
         self.replay_buffer_size = config.get('replay_buffer_size', self.replay_buffer_size)
         self.buffer_size = config.get('buffer_size', self.buffer_size)
+        self.buffer_size = config.get('num_iters', self.num_iters)
         assert self.buffer_size <= self.replay_buffer_size
 
         self.reward_scale = config.get('reward_scale', self.reward_scale)
@@ -72,10 +74,17 @@ class SAC(MethodSingleAgent):
     def update_parameters(self):
         if len(self.buffer) < self.buffer_size:  ### start timestamps
             return
+        
+        for _ in range(self.num_iters):
+            self.update_parameters_one_step()
+        return
+        
+    def update_parameters_one_step(self):
         self.update_parameters_start()
         self.writer.add_scalar(f'{self.tag_name}/replay_buffer_size', len(self.buffer), self.step_update)
 
         '''load data batch'''
+        print('---------------- here')
         experience = self.buffer.sample()
         state = experience.state
         action = experience.action_data.action

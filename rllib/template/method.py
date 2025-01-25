@@ -43,8 +43,8 @@ class Method(object):
         if iter_num == None:
             iter_num = self.step_update
         [model.save_model(self.model_dir, iter_num) for model in self.models_to_save]
-    def _load_model(self):
-        [model.load_model() for model in self.models_to_load]
+    def _load_model(self, model_num=None):
+        [model.load_model(model_num=model_num) for model in self.models_to_load]
         return
     def load_model(self):
         return self._load_model()

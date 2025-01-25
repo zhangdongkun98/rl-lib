@@ -1,6 +1,7 @@
 
 import copy
 from typing import Union
+import tqdm
 
 import torch
 import torch.nn as nn
@@ -51,47 +52,11 @@ class PPO(MethodSingleAgent):
         if len(self.buffer) < self.buffer_size:
             return
         self.update_parameters_start()
-        print(prefix(self) + 'update step: ', self.step_update)
+        # print(prefix(self) + 'update step: ', self.step_update)
 
-        for _ in range(self.num_iters):
-            self.step_train += 1
-
-            experience = self.buffer.sample(self.gamma, self.gae_lambda, advantage_normalization=True)
-            state = experience.state
-            action = experience.action_data.action
-            logprob_old = experience.action_data.logprob
-            value_old = experience.action_data.value
-
-            returns = experience.returns
-            advantage = experience.advantage
-
-            ### no need
-            # with torch.no_grad():
-            #     logprob_old, value_old, _, _ = self.policy_old.evaluate(state, action)
-
-            logprob, value, entropy, _ = self.policy.evaluate(state, action)
-
-            ratio = torch.exp(logprob - logprob_old)
-            surr1 = ratio * advantage
-            surr2 = torch.clamp(ratio, 1-self.epsilon_clip, 1+self.epsilon_clip) * advantage
-            loss_surr = -torch.min(surr1, surr2).mean()
-
-            loss_value = self.weight_value* self.critic_loss(value, returns)
-            loss_entropy = -self.weight_entropy* entropy.mean()
-            loss = loss_surr + loss_entropy + loss_value
-
-            self.optimizer.zero_grad()
-            loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-            self.optimizer.step()
-
-            self.writer.add_scalar('method/loss', loss.detach().item(), self.step_train)
-            self.writer.add_scalar('method/loss_surr', loss_surr.detach().item(), self.step_train)
-            self.writer.add_scalar('method/loss_entropy', loss_entropy.detach().item(), self.step_train)
-            self.writer.add_scalar('method/loss_value', loss_value.detach().item(), self.step_train)
-            self.writer.add_scalar('method/ratio_offline', (ratio.detach() -1).abs().mean().detach().item(), self.step_train)
-
-            self.update_callback(locals())
+        num_iters = max(int(len(self.buffer) / self.batch_size) * self.sample_reuse, 1)
+        for _ in tqdm.tqdm(range(num_iters), unit="batch", desc=f"Epoch {self.step_update} [TRAIN]", leave=False):
+            self.update_parameters_one_step()
 
         hard_update(self.policy_old, self.policy)
 
@@ -99,6 +64,49 @@ class PPO(MethodSingleAgent):
 
         self.buffer.clear()
         return
+
+
+    def update_parameters_one_step(self):
+        self.step_train += 1
+
+        experience = self.buffer.sample(self.gamma, self.gae_lambda, advantage_normalization=True)
+        state = experience.state
+        action = experience.action_data.action
+        logprob_old = experience.action_data.logprob
+        value_old = experience.action_data.value
+
+        returns = experience.returns
+        advantage = experience.advantage
+
+        ### no need
+        # with torch.no_grad():
+        #     logprob_old, value_old, _, _ = self.policy_old.evaluate(state, action)
+
+        logprob, value, entropy, _ = self.policy.evaluate(state, action)
+
+        ratio = torch.exp(logprob - logprob_old)
+        surr1 = ratio * advantage
+        surr2 = torch.clamp(ratio, 1-self.epsilon_clip, 1+self.epsilon_clip) * advantage
+        loss_surr = -torch.min(surr1, surr2).mean()
+
+        loss_value = self.weight_value* self.critic_loss(value, returns)
+        loss_entropy = -self.weight_entropy* entropy.mean()
+        loss = loss_surr + loss_entropy + loss_value
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        # torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+        self.optimizer.step()
+
+        self.writer.add_scalar('method/loss', loss.detach().item(), self.step_train)
+        self.writer.add_scalar('method/loss_surr', loss_surr.detach().item(), self.step_train)
+        self.writer.add_scalar('method/loss_entropy', loss_entropy.detach().item(), self.step_train)
+        self.writer.add_scalar('method/loss_value', loss_value.detach().item(), self.step_train)
+        self.writer.add_scalar('method/ratio_offline', (ratio.detach() -1).abs().mean().detach().item(), self.step_train)
+
+        self.update_callback(locals())
+        return
+
 
 
     @torch.no_grad()

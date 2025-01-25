@@ -18,7 +18,7 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
         self.method_name = method_name
 
         self.select_method()
-        self._load_model()
+        self._load_model(self.model_num)
         return
     
     def select_method(self):
@@ -66,13 +66,10 @@ class EvaluateSingleAgent(rllib.template.MethodSingleAgent):
         self.select_action_start()
         
         state = state.to(self.device)
-        action, logprob, mean = self.policy(state)
-
-        action_logprobs, state_value, dist_entropy = self.policy.evaluate(state, action)
-
+        action_data = self.policy(state)
+        action_data.update(action=action_data['mean'])
         # print('action: ', action.cpu().data, 'mean: ', mean.cpu().data, 'value: ', state_value.item())
-        # import pdb; pdb.set_trace()
-        return mean.cpu().data
+        return action_data.cpu()
 
 
     @torch.no_grad()

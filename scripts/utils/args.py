@@ -1,70 +1,125 @@
 
+import torch
+import os
+from os.path import join
+from typing import List
+import time
+import tqdm
 
-def generate_args():
-    import argparse
-    argparser = argparse.ArgumentParser(description=__doc__)
+from torch.optim import Optimizer
 
-    argparser.add_argument('-d', dest='description', default='Nothing', help='[Method] description.')
+from ..basic import Data
+from ..basic import YamlConfig
+from ..basic import Writer
+from ..basic import prefix
+from .model import Model
 
+class Method(object):
+    def __init__(self, config: YamlConfig, writer: Writer, tag_name='method'):
+        config.set('method_name', self.__class__.__name__)
 
-    argparser.add_argument('-e', '--env', default='LunarLander-v2', type=str, help='[Env] Available envs, including \
-        LunarLander-v2 \
-        LunarLanderContinuous-v2 \
-        HalfCheetah-v2 \
-        Hopper-v2 \
-    .')
-    argparser.add_argument('-m', '--method', default='None', type=str, help='[Method] Method to use.')
+        self.config = config
 
-    argparser.add_argument('--model-dir', default='None', type=str, help='[Model] dir contains model (default: False)')
-    argparser.add_argument('--model-num', default=-1, type=str, help='[Model] model-num to use.')
+        self.device = config.device
+        self.path_pack = config.path_pack
+        self.writer = writer
+        self.tag_name = tag_name
+        self.log_dir = join(self.path_pack.log_path, tag_name)
+        self.output_dir = join(self.path_pack.output_path, tag_name)
+        self.model_dir = self.path_pack.save_model_path + '_' + tag_name
+        os.makedirs(self.log_dir, exist_ok=True)
+        os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.model_dir, exist_ok=True)
 
-    argparser.add_argument('--seed', default=0, type=int, help='seed.')
-    argparser.add_argument('--render', action='store_true', help='render the env (default: False)')
+        self.dtype = torch.float32
+        self.step_train = self.step_update = -1
 
-    ### method params
-    argparser.add_argument('--batch-size', default=32, type=int, help='[Method Param]')
-    argparser.add_argument('--buffer-size', default=2000, type=int, help='[Method Param]')
-
-    argparser.add_argument('--weight-value', default=0.005, type=float, help='[Method Param] available: PPO')
-    argparser.add_argument('--weight-entropy', default=0.001, type=float, help='[Method Param] available: PPO')
-
-    args = argparser.parse_args()
-    return args
-
-
-
+        self.models: List[Model] = []
+        self.models_to_load, self.models_to_save = None, None
+        self.optimizers: List[Optimizer] = []
 
 
-class EnvParams(object):
-    def __init__(self, env):
-        self.env_name = str(env).split('<')[-1][:-3]
-        if self.env_name == 'LunarLander-v2':
-            self.dim_state = env.observation_space.shape[0]
-            self.dim_action = env.action_space.n
-            self.solved_reward = 230
-            self.time_tolerance = 300
-            self.continuous_action_space = False
-        elif self.env_name == 'LunarLanderContinuous-v2':
-            self.dim_state = env.observation_space.shape[0]
-            self.dim_action = env.action_space.shape[0]
-            self.solved_reward = 230
-            self.time_tolerance = 300
-            self.continuous_action_space = True
-
-        elif self.env_name == 'HalfCheetah-v2':
-            self.dim_state = env.observation_space.shape[0]
-            self.dim_action = env.action_space.shape[0]
-            self.solved_reward = 500
-            self.time_tolerance = 1000 # int(3e10)
-            self.continuous_action_space = True
-        elif self.env_name == 'Hopper-v2':
-            self.dim_state = env.observation_space.shape[0]
-            self.dim_action = env.action_space.shape[0]
-            self.solved_reward = 1000
-            self.time_tolerance = 1000 # int(3e10)
-            self.continuous_action_space = True
-
-        else:
-            raise NotImplementedError
+    def _save_model(self, iter_num=None):
+        if iter_num == None:
+            iter_num = self.step_update
+        [model.save_model(self.model_dir, iter_num) for model in self.models_to_save]
+    def _load_model(self, model_num=None):
+        [model.load_model(model_num=model_num) for model in self.models_to_load]
         return
+    def load_model(self):
+        return self._load_model()
+
+    def update_parameters_start(self):
+        self.step_update += 1
+
+    def update_callback(self, local):
+        local.pop('self')
+        # local.pop('__class__')
+        return Data(**local)
+
+    def update_parameters_(self, index, n_iters=1000):
+        t1 = time.time()
+
+        # for i in range(n_iters):
+        #     if i % (n_iters //10) == 0:
+        #         print(prefix(self) + 'update_parameters index / total: ', i, n_iters)
+        #     self.update_parameters()
+
+        for i in tqdm.tqdm(range(n_iters)):
+        # for i in range(n_iters):
+            self.update_parameters()
+        
+        t2 = time.time()
+        self.writer.add_scalar(f'{self.tag_name}/update_time', t2-t1, index)
+        self.writer.add_scalar(f'{self.tag_name}/update_iters', n_iters, index)
+        self.writer.add_scalar(f'{self.tag_name}/update_time_per_iter', (t2-t1) /n_iters, index)
+        # print()
+        return
+
+    def update_parameters(self):
+        return
+
+
+    def get_writer(self):
+        return self.writer
+    def reset_writer(self):
+        self.writer = Writer(log_dir=self.log_dir, comment=self.config.dataset_name, max_queue=100)
+
+    def get_models(self):
+        return self.models_to_save
+
+    def get_model_params(self):
+        models = self.get_models()
+        model_params = [[param.data for param in model.parameters()] for model in models]
+        return model_params
+
+    def get_optimizers(self):
+        return self.optimizers
+
+
+
+class MethodSingleAgent(Method):
+    def __init__(self, config: YamlConfig, writer: Writer, tag_name='method'):
+        super(MethodSingleAgent, self).__init__(config, writer, tag_name)
+
+        self.dim_state, self.dim_action = config.dim_state, config.dim_action
+        self.step_select = -1
+
+        self.buffer = None
+
+    def select_action_start(self):
+        self.step_select += 1
+
+    def store(self, experience, **kwargs):
+        self.buffer.push(experience, **kwargs)
+
+    def close(self):
+        self.writer.close()
+        if hasattr(self.buffer, 'close'):
+            self.buffer.close()
+        return
+
+
+    def get_buffer(self):
+        return self.buffer
 
